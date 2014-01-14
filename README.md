@@ -1,2 +1,2 @@
 # weblog-ng-client-dotnet #
-This is the WeblogNG client library.
+This is the WeblogNG client library for .Net.
