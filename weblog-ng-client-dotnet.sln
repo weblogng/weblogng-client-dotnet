@@ -21,6 +21,6 @@ Global
 		{F1BEC712-26E8-4AC9-A5F4-E9BDB0CCE0F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = weblog-ng-client-dotnet\weblog-ng-client-dotnet.csproj
+		StartupItem = tester\tester.csproj
 	EndGlobalSection
 EndGlobal
