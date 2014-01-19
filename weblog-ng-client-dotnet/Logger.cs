@@ -4,6 +4,9 @@ using System.Net;
 using WebSocket4Net;
 using SuperSocket.ClientEngine;
 using System.Text.RegularExpressions;
+using weblog;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace weblog
 {
@@ -15,6 +18,7 @@ namespace weblog
 		private WebSocket websocket;
 		private String apiKey;
 		private String apiHost;
+		private LinkedList<Timer> FinishedTimers = new LinkedList<Timer>();
 
 		public Logger (String _apiHost, String _apiKey)
 		{
@@ -52,6 +56,22 @@ namespace weblog
 		{
 			Console.WriteLine ("Weblogng: Connection closed");
 		}
+
+		
+		public Timer CreateTimer(String MetricName) 
+		{
+			return new Timer(MetricName, this);	
+		}
+		
+		
+		internal void addToFinishedTimers(Timer timer) {
+			FinishedTimers.AddLast(timer);
+		}
+		
+		public LinkedList<Timer> getFinishedTimers() {
+			return FinishedTimers;
+		}
+		
 		
 		/**
 		 * Sends metric and it's value to the server
