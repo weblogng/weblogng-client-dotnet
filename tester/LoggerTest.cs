@@ -7,9 +7,7 @@ namespace weblogclienttester
 	[TestFixture()]
 	public class LoggerTest
 	{
-		
-		Logger logger;
-		
+	
 		[Test()]
 		public void should_throw_exception_if_empty_uri ()
 		{
@@ -78,12 +76,24 @@ namespace weblogclienttester
 			Assert.Contains(timer, logger.getFinishedTimers());
 		}
 		
+		
+		[Test()]
+		public void using_should_time_block_of_code() 
+		{
+			Logger logger = new Logger("http://some_host", "fake_api_key");
+			using(logger.CreateTimer("operation_a_execution_time"))
+			{ 
+                               
+				System.Threading.Thread.Sleep (100); //ms
+                               
+            }
+			
+			Assert.AreEqual(1, logger.getFinishedTimers().Count);
+			
+			Timer t = logger.getFinishedTimers().First.Value;
+			
+			Assert.GreaterOrEqual(t.timeElapsedMilliseconds(), 75L);
+		}
 	}
 }
 
-
-/*
-	using(logger.CreateTimer("operation_a_execution_time")){ //new Timer(this);
-                               System.sleep (100); //ms
-                                                      }
-*/                       

@@ -29,6 +29,10 @@ namespace weblog
 			Watch.Stop();
 			Logger.addToFinishedTimers(this);
 		}
+		
+		public long timeElapsedMilliseconds() {
+			return Watch.ElapsedMilliseconds;	
+		}
 
 	}
 	
