@@ -15,35 +15,22 @@ namespace weblog
 	public class Logger
 	{
 		private String id;
-		private String apiKey;
-		private String apiHost;
 		private FinishedMetricsFlusher finishedMetricsFlusher;
 		private Object finishedTimersLock = new Object();
 
 		private LinkedList<Timer> FinishedTimers = new LinkedList<Timer>();
 
-		public Logger (String _apiHost, String _apiKey, FinishedMetricsFlusher flusher=null)
+		public Logger (FinishedMetricsFlusher flusher)
 		{
 			Console.WriteLine ("WeblogNG: initializing...");
 			this.id = System.Guid.NewGuid ().ToString ();
-			this.apiHost = _apiHost;
-			this.apiKey = _apiKey;
 
 			if (flusher == null) {
 				throw new ArgumentException ("Logger requires a FinishedMetricsFlusher, but was null");
 			} else {
 				this.finishedMetricsFlusher = flusher;
 			}
-		}
 
-		public String ApiHost
-		{
-			get { return apiHost; }
-		}
-
-		public String ApiKey
-		{
-			get { return apiKey; }
 		}
 
 		public FinishedMetricsFlusher FinishedMetricsFlusher 
@@ -120,7 +107,7 @@ namespace weblog
 
 		override public String ToString ()
 		{
-			return String.Format ("[Logger id: {0}, apiHost: {1}, apiKey: #{2} ]", id, apiHost, apiKey);
+			return String.Format ("[Logger id: {0}, flusher: {1} ]", id, finishedMetricsFlusher);
 		}
 	}
 

@@ -9,7 +9,7 @@ namespace weblog
 	{
 
 		Logger MakeLogger(){
-			return new Logger ("some_host", "fake_api_key", new MockFinishedMetricsFlusher());
+			return new Logger (new MockFinishedMetricsFlusher());
 		}
 
 		class MockFinishedMetricsFlusher : FinishedMetricsFlusher {
@@ -23,25 +23,18 @@ namespace weblog
 		[Test()]
 		public void should_be_configured_via_constructor_params ()
 		{
-			String expectedHost = "host";
-			String expectedKey = "api-key";
 			FinishedMetricsFlusher expectedFlusher = new MockFinishedMetricsFlusher ();
 
-			Logger logger = new Logger (expectedHost, expectedKey, expectedFlusher);
+			Logger logger = new Logger (expectedFlusher);
 
-			Assert.AreEqual (expectedHost, logger.ApiHost);
-			Assert.AreEqual (expectedKey, logger.ApiKey);
 			Assert.AreSame (expectedFlusher, logger.FinishedMetricsFlusher);
 		}
 
 		[Test()]
 		public void should_throw_exception_if_flusher_not_provided ()
 		{
-			String expectedHost = "host";
-			String expectedKey = "api-key";
-
 			try {
-				new Logger (expectedHost, expectedKey, null);
+				new Logger (null);
 				Assert.Fail("expected an exception due null flusher");
 			}
 			catch(System.ArgumentException ex) {
@@ -49,18 +42,7 @@ namespace weblog
 			}
 		}
 			
-		[Test()]
-		public void should_throw_exception_if_empty_uri ()
-		{
-			try {
-				new Logger("", "");
-				Assert.Fail("expected an exception due to an empty uri");
-			}
-			catch(System.ArgumentException ex) {
-				Assert.IsNotNull (ex);
-			}
-		}
-		
+
 		[Test()]
 		public void it_should_sanitize_invalid_names() 
 		{
