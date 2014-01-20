@@ -179,11 +179,8 @@ namespace weblog
 
 		[Test()]
 		public void should_be_configured_via_constructor_params(){
-			//fixme: the Logger<->Flusher API relationship is broken.  
-			//A [Mock] flusher instance is required to instantiate an AsyncFlusher? bad idea.
-			Logger logger = new Logger ("host", "key", new MockFinishedMetricsFlusher ());
 			LoggerAPIConnection apiConnection = new MockLoggerAPIConnection ();
-			AsyncFinishedMetricsFlusher flusher = new AsyncFinishedMetricsFlusher (logger, apiConnection);
+			AsyncFinishedMetricsFlusher flusher = new AsyncFinishedMetricsFlusher (apiConnection);
 
 			Assert.AreSame (apiConnection, flusher.LoggerAPIConnection);
 		}

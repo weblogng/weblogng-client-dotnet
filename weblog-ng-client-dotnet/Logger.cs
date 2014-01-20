@@ -30,7 +30,7 @@ namespace weblog
 			this.apiKey = _apiKey;
 
 			if (flusher == null) {
-				this.finishedMetricsFlusher = new AsyncFinishedMetricsFlusher (this, new LoggerAPIConnectionWS (this.apiHost, this.apiKey));
+				this.finishedMetricsFlusher = new AsyncFinishedMetricsFlusher (new LoggerAPIConnectionWS (this.apiHost, this.apiKey));
 			} else {
 				this.finishedMetricsFlusher = flusher;
 			}
@@ -148,7 +148,7 @@ namespace weblog
 		//retaining a reference to flushFinishedTimersTimer to avoid GC, but is this necessary?
 		private System.Threading.Timer flushFinishedTimersTimer;
 
-		public AsyncFinishedMetricsFlusher(Logger logger, LoggerAPIConnection apiConnection)
+		public AsyncFinishedMetricsFlusher(LoggerAPIConnection apiConnection)
 		{
 			this.logger = logger;
 			this.apiConnection = apiConnection;
