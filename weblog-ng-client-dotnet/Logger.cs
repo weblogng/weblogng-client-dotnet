@@ -215,7 +215,7 @@ namespace weblog
 			websocket.Closed += new EventHandler (websocket_Closed);
 			websocket.MessageReceived += new EventHandler<MessageReceivedEventArgs> (websocket_MessageReceived);
 			websocket.Open ();
-			Console.WriteLine ("Weblogng: Websocket version:" + websocket.Version);
+			Console.WriteLine ("WeblogNG: WebSocket version: " + websocket.Version);
 		}
 
 		public String ApiKey
@@ -250,6 +250,9 @@ namespace weblog
 
 		public void sendMetrics(ICollection<Timer> timers){
 			Console.WriteLine ("sending timers over ws: " + timers);
+			foreach(Timer timer in timers){
+				websocket.Send(createMetricMessage(timer.MetricName, timer.TimeElapsedMilliseconds.ToString()));
+			}
 		}
 
 		private void websocket_Opened (object sender, EventArgs e)
