@@ -109,6 +109,16 @@ namespace weblog
 		{
 			return String.Format ("[Logger id: {0}, flusher: {1} ]", id, finishedMetricsFlusher);
 		}
+
+		/**
+		 * Creates a Logger configured to log to production asynchronously over websockets using
+		 * the provided api key.
+		 */
+		public static Logger CreateAsyncLogger(String apiKey){
+			LoggerAPIConnectionWS apiConnection = new LoggerAPIConnectionWS ("ec2-174-129-123-237.compute-1.amazonaws.com:9000", "93c5a127-e2a4-42cc-9cc6-cf17fdac8a7f");
+			AsyncFinishedMetricsFlusher flusher = new AsyncFinishedMetricsFlusher (apiConnection);
+			return new Logger(flusher);
+		}
 	}
 
 	public interface FinishedMetricsFlusher {
