@@ -22,9 +22,6 @@ namespace weblog
 
 		private LinkedList<Timer> FinishedTimers = new LinkedList<Timer>();
 
-		//retaining a reference to flushFinishedTimersTimer to avoid GC, but is this necessary?
-		private System.Threading.Timer flushFinishedTimersTimer;
-
 		public Logger (String _apiHost, String _apiKey, FinishedMetricsFlusher flusher=null)
 		{
 			Console.WriteLine ("WeblogNG: initializing...");
@@ -34,9 +31,6 @@ namespace weblog
 
 			if (flusher == null) {
 				this.finishedMetricsFlusher = new AsyncFinishedMetricsFlusher (this, new LoggerAPIConnectionWS (this.apiHost, this.apiKey));
-				AutoResetEvent autoEvent = new AutoResetEvent (false);
-				TimerCallback callback = this.finishedMetricsFlusher.Flush;
-				flushFinishedTimersTimer = new System.Threading.Timer (callback, autoEvent, 10000, 10000);
 			} else {
 				this.finishedMetricsFlusher = flusher;
 			}
@@ -135,15 +129,38 @@ namespace weblog
 	}
 
 
-	class AsyncFinishedMetricsFlusher : FinishedMetricsFlusher
+	public class AsyncFinishedMetricsFlusher : FinishedMetricsFlusher
 	{
+		//there are a number of options (understatement) for implementing async operations in C#:
+		//best bet currently looks like using a 'Thread Timer:
+		//http://msdn.microsoft.com/en-us/library/swx5easy.aspx
+		//
+		//could also use the AsyncOperationManager, but still need something to kick-off the operation:
+		//http://msdn.microsoft.com/en-us/library/9hk12d4y(v=vs.110).aspx
+
+		//the Logger and maybe the LoggerAPIConnection should be made available via the [custom] 'state object'
+		//that is passed as a parameter on each timer callback.  providing the Logger instance in the state object
+		//will help avoid the currently-awkward construction requirement of the flusher needing a Logger and the Logger wanting a Flusher.
+
 		private Logger logger;
 		private LoggerAPIConnection apiConnection;
+
+		//retaining a reference to flushFinishedTimersTimer to avoid GC, but is this necessary?
+		private System.Threading.Timer flushFinishedTimersTimer;
 
 		public AsyncFinishedMetricsFlusher(Logger logger, LoggerAPIConnection apiConnection)
 		{
 			this.logger = logger;
 			this.apiConnection = apiConnection;
+
+			AutoResetEvent autoEvent = new AutoResetEvent (false);
+			TimerCallback callback = this.Flush;
+			flushFinishedTimersTimer = new System.Threading.Timer (callback, autoEvent, 10000, 10000);
+		}
+
+		public LoggerAPIConnection LoggerAPIConnection 
+		{
+			get { return this.apiConnection; }
 		}
 
 		public void Flush(Object stateInfo)
@@ -158,7 +175,8 @@ namespace weblog
 
 	}
 
-	interface LoggerAPIConnection {
+	//fixme: should be internal
+	public interface LoggerAPIConnection {
 		void sendMetrics(ICollection<Timer> timers);
 	}
 

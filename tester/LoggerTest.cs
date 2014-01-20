@@ -159,5 +159,35 @@ namespace weblog
 		}
 	}
 
+	[TestFixture()]
+	public class AsyncFinishedMetricsFlusherTest {
+
+		class MockFinishedMetricsFlusher : FinishedMetricsFlusher {
+
+			public void Flush (Object stateInfo){
+				Console.WriteLine ("Flushed with " + stateInfo.ToString());
+			}
+
+		}
+
+		class MockLoggerAPIConnection : LoggerAPIConnection {
+			public void sendMetrics(ICollection<Timer> timers){
+				Console.WriteLine ("Sending metrics with " + timers.ToString());
+			}
+		}
+
+
+		[Test()]
+		public void should_be_configured_via_constructor_params(){
+			//fixme: the Logger<->Flusher API relationship is broken.  
+			//A [Mock] flusher instance is required to instantiate an AsyncFlusher? bad idea.
+			Logger logger = new Logger ("host", "key", new MockFinishedMetricsFlusher ());
+			LoggerAPIConnection apiConnection = new MockLoggerAPIConnection ();
+			AsyncFinishedMetricsFlusher flusher = new AsyncFinishedMetricsFlusher (logger, apiConnection);
+
+			Assert.AreSame (apiConnection, flusher.LoggerAPIConnection);
+		}
+	}
+
 }
 
