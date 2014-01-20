@@ -9,6 +9,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>weblogclienttester</RootNamespace>
     <AssemblyName>weblog-client-tester</AssemblyName>
+    <StartupObject>weblogclienttester.MainClass</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
