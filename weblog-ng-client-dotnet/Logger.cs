@@ -167,9 +167,8 @@ namespace weblog
 		{
 			this.apiConnection = apiConnection;
 
-			AutoResetEvent autoEvent = new AutoResetEvent (false);
 			TimerCallback callback = this.Flush;
-			new System.Threading.Timer (callback, autoEvent, 10000, 10000);
+			new System.Threading.Timer (callback, new object(), 10000, 10000);
 		}
 
 		public LoggerAPIConnection LoggerAPIConnection 
@@ -183,11 +182,12 @@ namespace weblog
 
 			//todo: retrieve logger from stateInfo
 			//this method must be re-entrant safe.  it is possible for this method to be executed simultaneously on two threads
-			//LinkedList<Timer> timersToFlush = logger.DrainFinishedTimersForFlush ();
-			//Task.Factory.StartNew (() => apiConnection.sendMetrics(timersToFlush));
+			LinkedList<Timer> timersToFlush = DrainFinishedTimersForFlush ();
 
-			AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
-			autoEvent.Set ();
+			if (timersToFlush.Count > 0) {
+				Task.Factory.StartNew (() => apiConnection.sendMetrics(timersToFlush));
+			}
+
 		}
 
 	}

@@ -165,6 +165,26 @@ namespace weblog
 			Assert.AreNotSame (drainedTimers, flusher.GetFinishedTimers());
 			Assert.AreEqual (0, flusher.GetFinishedTimers().Count);
 		}
+
+		[Test()]
+		public void flush_should_drain_finished_timers(){
+			AsyncFinishedMetricsFlusher flusher = MakeFlusher();
+
+			ICollection<Timer> origFinishedTimers = flusher.GetFinishedTimers ();
+
+			Assert.AreEqual (0, origFinishedTimers.Count);
+
+			Timer timer = new Timer ("an_operation", new Logger(flusher));
+			flusher.AddToFinishedTimers (timer);
+
+			Assert.Contains (timer, flusher.GetFinishedTimers ());
+
+			flusher.Flush (new object());
+
+			Assert.AreEqual (0, flusher.GetFinishedTimers().Count);
+
+		}
+
 	}
 
 	[TestFixture()]
