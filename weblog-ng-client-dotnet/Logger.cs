@@ -30,7 +30,7 @@ namespace weblog
 			this.apiKey = _apiKey;
 
 			if (flusher == null) {
-				this.finishedMetricsFlusher = new AsyncFinishedMetricsFlusher (new LoggerAPIConnectionWS (this.apiHost, this.apiKey));
+				throw new ArgumentException ("Logger requires a FinishedMetricsFlusher, but was null");
 			} else {
 				this.finishedMetricsFlusher = flusher;
 			}

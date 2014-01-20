@@ -35,16 +35,18 @@ namespace weblog
 		}
 
 		[Test()]
-		public void should_be_create_a_flusher_when_not_provided ()
+		public void should_throw_exception_if_flusher_not_provided ()
 		{
 			String expectedHost = "host";
 			String expectedKey = "api-key";
 
-			Logger logger = new Logger (expectedHost, expectedKey);
-
-			Assert.AreEqual (expectedHost, logger.ApiHost);
-			Assert.AreEqual (expectedKey, logger.ApiKey);
-			Assert.IsNotNull (logger.FinishedMetricsFlusher);
+			try {
+				new Logger (expectedHost, expectedKey, null);
+				Assert.Fail("expected an exception due null flusher");
+			}
+			catch(System.ArgumentException ex) {
+				Assert.IsNotNull (ex);
+			}
 		}
 			
 		[Test()]
