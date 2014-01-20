@@ -116,7 +116,7 @@ namespace weblog
 			
 			Timer t = logger.GetFinishedTimers().First.Value;
 			
-			Assert.GreaterOrEqual(t.timeElapsedMilliseconds(), 75L);
+			Assert.GreaterOrEqual(t.TimeElapsedMilliseconds, 75L);
 		}
 
 	}

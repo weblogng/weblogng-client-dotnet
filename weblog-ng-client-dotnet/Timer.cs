@@ -8,12 +8,12 @@ namespace weblog
 		public string MetricName { get; set; }
 		
 		private Stopwatch Watch;
-		private Logger Logger;
+		private Logger logger;
 		
 		public Timer (String metricName, Logger logger)
 		{
 			MetricName = metricName;
-			Logger = logger;
+			this.logger = logger;
 			Watch = new Stopwatch ();
 			Watch.Start ();
 			
@@ -29,9 +29,13 @@ namespace weblog
 			Watch.Stop();
 			Logger.AddToFinishedTimers(this);
 		}
-		
-		public long timeElapsedMilliseconds() {
-			return Watch.ElapsedMilliseconds;	
+
+		public long TimeElapsedMilliseconds {
+			get { return Watch.ElapsedMilliseconds; }
+		}
+
+		public Logger Logger {
+			get { return this.logger; }
 		}
 
 	}
