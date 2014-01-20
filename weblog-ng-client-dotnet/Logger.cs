@@ -188,6 +188,16 @@ namespace weblog
 			Console.WriteLine ("Weblogng: Websocket version:" + websocket.Version);
 		}
 
+		public String ApiKey
+		{
+			get { return this.apiKey; }
+		}
+
+		public String ApiUrl 
+		{
+			get { return this.apiUrl; }
+		}
+
 
 		public static String sanitizeMetricName (String metricName)
 		{
