@@ -9,6 +9,10 @@ namespace weblogclienttester
 		{
 			Logger logger = Logger.CreateAsyncLogger ("93c5a127-e2a4-42cc-9cc6-cf17fdac8a7f");
 
+			using(logger.CreateTimer("csharp-tester-startup")){
+				System.Threading.Thread.Sleep (200); //ms
+			}
+
 			Console.WriteLine ("Using logger {0}", logger.ToString ());
 			Console.WriteLine ("Press Enter key to stop...");
 			Console.ReadLine();

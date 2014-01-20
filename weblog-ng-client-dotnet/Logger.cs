@@ -16,9 +16,6 @@ namespace weblog
 	{
 		private String id;
 		private FinishedMetricsFlusher finishedMetricsFlusher;
-		private Object finishedTimersLock = new Object();
-
-		private LinkedList<Timer> FinishedTimers = new LinkedList<Timer>();
 
 		public Logger (FinishedMetricsFlusher flusher)
 		{
@@ -46,30 +43,14 @@ namespace weblog
 		//fixme: should be internal
 		public void AddToFinishedTimers(Timer timer)
 		{
-			lock (finishedTimersLock) {
-				FinishedTimers.AddLast (timer);
-			}
+			this.finishedMetricsFlusher.AddToFinishedTimers (timer);
 		}
 
 		//fixme: should be internal
 		public LinkedList<Timer> GetFinishedTimers()
 		{
-			lock (finishedTimersLock) {
-				return FinishedTimers;
-			}
+			return this.finishedMetricsFlusher.GetFinishedTimers ();
 		}
-
-		//fixme: should be internal
-		public LinkedList<Timer> DrainFinishedTimersForFlush()
-		{
-			LinkedList<Timer> oldFinishedTimers;
-			lock (finishedTimersLock) {
-				oldFinishedTimers = FinishedTimers;
-				FinishedTimers = new LinkedList<Timer> ();
-			}
-			return oldFinishedTimers;
-		}
-		
 
 
 		public void recordStart (String metricName)
@@ -120,13 +101,54 @@ namespace weblog
 			return new Logger(flusher);
 		}
 	}
-
+	
 	public interface FinishedMetricsFlusher {
 		void Flush (Object stateInfo);
+
+		//fixme: should be internal
+		void AddToFinishedTimers (Timer timer);
+		//fixme: should be internal
+		LinkedList<Timer> GetFinishedTimers ();
+	}
+
+	public abstract class BaseFinishedMetricsFlusher : FinishedMetricsFlusher {
+
+		private Object finishedTimersLock = new Object();
+		private LinkedList<Timer> FinishedTimers = new LinkedList<Timer>();
+
+		abstract public void Flush (Object stateInfo);
+
+
+		//fixme: should be internal
+		public void AddToFinishedTimers(Timer timer)
+		{
+			lock (finishedTimersLock) {
+				FinishedTimers.AddLast (timer);
+			}
+		}
+
+		//fixme: should be internal
+		public LinkedList<Timer> GetFinishedTimers()
+		{
+			lock (finishedTimersLock) {
+				return FinishedTimers;
+			}
+		}
+
+		//fixme: should be internal
+		public LinkedList<Timer> DrainFinishedTimersForFlush()
+		{
+			LinkedList<Timer> oldFinishedTimers;
+			lock (finishedTimersLock) {
+				oldFinishedTimers = FinishedTimers;
+				FinishedTimers = new LinkedList<Timer> ();
+			}
+			return oldFinishedTimers;
+		}
 	}
 
 
-	public class AsyncFinishedMetricsFlusher : FinishedMetricsFlusher
+	public class AsyncFinishedMetricsFlusher : BaseFinishedMetricsFlusher
 	{
 		//there are a number of options (understatement) for implementing async operations in C#:
 		//best bet currently looks like using a 'Thread Timer:
@@ -145,9 +167,8 @@ namespace weblog
 		{
 			this.apiConnection = apiConnection;
 
-			AutoResetEvent autoEvent = new AutoResetEvent (false);
 			TimerCallback callback = this.Flush;
-			new System.Threading.Timer (callback, autoEvent, 10000, 10000);
+			new System.Threading.Timer (callback, new object(), 10000, 10000);
 		}
 
 		public LoggerAPIConnection LoggerAPIConnection 
@@ -155,17 +176,18 @@ namespace weblog
 			get { return this.apiConnection; }
 		}
 
-		public void Flush(Object stateInfo)
+		override public void Flush(Object stateInfo)
 		{
 			Console.WriteLine ("AsyncFinishedMetricsFlusher.Flush called; stateInfo: {0}", stateInfo);
 
 			//todo: retrieve logger from stateInfo
 			//this method must be re-entrant safe.  it is possible for this method to be executed simultaneously on two threads
-			//LinkedList<Timer> timersToFlush = logger.DrainFinishedTimersForFlush ();
-			//Task.Factory.StartNew (() => apiConnection.sendMetrics(timersToFlush));
+			LinkedList<Timer> timersToFlush = DrainFinishedTimersForFlush ();
 
-			AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
-			autoEvent.Set ();
+			if (timersToFlush.Count > 0) {
+				Task.Factory.StartNew (() => apiConnection.sendMetrics(timersToFlush));
+			}
+
 		}
 
 	}

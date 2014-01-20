@@ -4,6 +4,14 @@ using NUnit.Framework;
 
 namespace weblog
 {
+	class MockFinishedMetricsFlusher : BaseFinishedMetricsFlusher {
+
+		override public void Flush (Object stateInfo){
+			Console.WriteLine ("Flushed with " + stateInfo.ToString());
+		}
+
+	}
+
 	[TestFixture()]
 	public class LoggerTest
 	{
@@ -12,13 +20,6 @@ namespace weblog
 			return new Logger (new MockFinishedMetricsFlusher());
 		}
 
-		class MockFinishedMetricsFlusher : FinishedMetricsFlusher {
-
-			public void Flush (Object stateInfo){
-				Console.WriteLine ("Flushed with " + stateInfo.ToString());
-			}
-
-		}
 
 		[Test()]
 		public void should_be_configured_via_constructor_params ()
@@ -118,41 +119,10 @@ namespace weblog
 			Assert.GreaterOrEqual(t.timeElapsedMilliseconds(), 75L);
 		}
 
-		[Test()]
-		public void draining_finished_timers_should_result_in_new_empty_collection(){
-			//DrainFinishedTimersForFlush
-
-			Logger logger = MakeLogger();
-
-			ICollection<Timer> origFinishedTimers = logger.GetFinishedTimers ();
-
-			Assert.AreEqual (0, origFinishedTimers.Count);
-
-			Timer timer = new Timer ("an_operation", logger);
-			logger.AddToFinishedTimers (timer);
-
-			Assert.AreSame (origFinishedTimers, logger.GetFinishedTimers ());
-			Assert.Contains (timer, logger.GetFinishedTimers ());
-			Assert.AreEqual (1, origFinishedTimers.Count);
-
-			ICollection<Timer> drainedTimers = logger.DrainFinishedTimersForFlush ();
-			Assert.AreSame (origFinishedTimers, drainedTimers);
-
-			Assert.AreNotSame (drainedTimers, logger.GetFinishedTimers());
-			Assert.AreEqual (0, logger.GetFinishedTimers().Count);
-		}
 	}
 
 	[TestFixture()]
 	public class AsyncFinishedMetricsFlusherTest {
-
-		class MockFinishedMetricsFlusher : FinishedMetricsFlusher {
-
-			public void Flush (Object stateInfo){
-				Console.WriteLine ("Flushed with " + stateInfo.ToString());
-			}
-
-		}
 
 		class MockLoggerAPIConnection : LoggerAPIConnection {
 			public void sendMetrics(ICollection<Timer> timers){
@@ -160,6 +130,9 @@ namespace weblog
 			}
 		}
 
+		private AsyncFinishedMetricsFlusher MakeFlusher (){
+			return new AsyncFinishedMetricsFlusher (new MockLoggerAPIConnection ());
+		}
 
 		[Test()]
 		public void should_be_configured_via_constructor_params(){
@@ -168,6 +141,50 @@ namespace weblog
 
 			Assert.AreSame (apiConnection, flusher.LoggerAPIConnection);
 		}
+
+
+		[Test()]
+		public void draining_finished_timers_should_result_in_new_empty_collection(){
+
+			AsyncFinishedMetricsFlusher flusher = MakeFlusher();
+
+			ICollection<Timer> origFinishedTimers = flusher.GetFinishedTimers ();
+
+			Assert.AreEqual (0, origFinishedTimers.Count);
+
+			Timer timer = new Timer ("an_operation", new Logger(flusher));
+			flusher.AddToFinishedTimers (timer);
+
+			Assert.AreSame (origFinishedTimers, flusher.GetFinishedTimers ());
+			Assert.Contains (timer, flusher.GetFinishedTimers ());
+			Assert.AreEqual (1, origFinishedTimers.Count);
+
+			ICollection<Timer> drainedTimers = flusher.DrainFinishedTimersForFlush ();
+			Assert.AreSame (origFinishedTimers, drainedTimers);
+
+			Assert.AreNotSame (drainedTimers, flusher.GetFinishedTimers());
+			Assert.AreEqual (0, flusher.GetFinishedTimers().Count);
+		}
+
+		[Test()]
+		public void flush_should_drain_finished_timers(){
+			AsyncFinishedMetricsFlusher flusher = MakeFlusher();
+
+			ICollection<Timer> origFinishedTimers = flusher.GetFinishedTimers ();
+
+			Assert.AreEqual (0, origFinishedTimers.Count);
+
+			Timer timer = new Timer ("an_operation", new Logger(flusher));
+			flusher.AddToFinishedTimers (timer);
+
+			Assert.Contains (timer, flusher.GetFinishedTimers ());
+
+			flusher.Flush (new object());
+
+			Assert.AreEqual (0, flusher.GetFinishedTimers().Count);
+
+		}
+
 	}
 
 	[TestFixture()]
