@@ -17,24 +17,29 @@ namespace weblog
 		private String id;
 		private String apiKey;
 		private String apiHost;
+		private FinishedMetricsFlusher finishedMetricsFlusher;
 		private Object finishedTimersLock = new Object();
 
 		private LinkedList<Timer> FinishedTimers = new LinkedList<Timer>();
 
+		//retaining a reference to flushFinishedTimersTimer to avoid GC, but is this necessary?
 		private System.Threading.Timer flushFinishedTimersTimer;
 
-		public Logger (String _apiHost, String _apiKey)
+		public Logger (String _apiHost, String _apiKey, FinishedMetricsFlusher flusher=null)
 		{
 			Console.WriteLine ("WeblogNG: initializing...");
 			this.id = System.Guid.NewGuid ().ToString ();
 			this.apiHost = _apiHost;
 			this.apiKey = _apiKey;
 
-			AsyncFinishedMetricsFlusher flusher = new AsyncFinishedMetricsFlusher (this, new LoggerAPIConnectionWS(this.apiHost, this.apiKey));
-
-			AutoResetEvent autoEvent = new AutoResetEvent(false);
-			TimerCallback callback = flusher.Flush;
-			flushFinishedTimersTimer = new System.Threading.Timer(callback, autoEvent, 10000, 10000);
+			if (flusher == null) {
+				this.finishedMetricsFlusher = new AsyncFinishedMetricsFlusher (this, new LoggerAPIConnectionWS (this.apiHost, this.apiKey));
+				AutoResetEvent autoEvent = new AutoResetEvent (false);
+				TimerCallback callback = this.finishedMetricsFlusher.Flush;
+				flushFinishedTimersTimer = new System.Threading.Timer (callback, autoEvent, 10000, 10000);
+			} else {
+				this.finishedMetricsFlusher = flusher;
+			}
 		}
 
 		public String ApiHost
@@ -45,6 +50,11 @@ namespace weblog
 		public String ApiKey
 		{
 			get { return apiKey; }
+		}
+
+		public FinishedMetricsFlusher FinishedMetricsFlusher 
+		{
+			get { return this.finishedMetricsFlusher; }
 		}
 
 		public Timer CreateTimer(String MetricName) 
@@ -120,7 +130,7 @@ namespace weblog
 		}
 	}
 
-	interface FinishedMetricsFlusher {
+	public interface FinishedMetricsFlusher {
 		void Flush (Object stateInfo);
 	}
 

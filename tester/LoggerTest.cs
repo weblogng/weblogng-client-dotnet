@@ -9,11 +9,33 @@ namespace weblog
 	{
 
 		Logger MakeLogger(){
-			return new Logger ("some_host", "fake_api_key");
+			return new Logger ("some_host", "fake_api_key", new MockFinishedMetricsFlusher());
+		}
+
+		class MockFinishedMetricsFlusher : FinishedMetricsFlusher {
+
+			public void Flush (Object stateInfo){
+				Console.WriteLine ("Flushed with " + stateInfo.ToString());
+			}
+
 		}
 
 		[Test()]
 		public void should_be_configured_via_constructor_params ()
+		{
+			String expectedHost = "host";
+			String expectedKey = "api-key";
+			FinishedMetricsFlusher expectedFlusher = new MockFinishedMetricsFlusher ();
+
+			Logger logger = new Logger (expectedHost, expectedKey, expectedFlusher);
+
+			Assert.AreEqual (expectedHost, logger.ApiHost);
+			Assert.AreEqual (expectedKey, logger.ApiKey);
+			Assert.AreSame (expectedFlusher, logger.FinishedMetricsFlusher);
+		}
+
+		[Test()]
+		public void should_be_create_a_flusher_when_not_provided ()
 		{
 			String expectedHost = "host";
 			String expectedKey = "api-key";
@@ -22,8 +44,9 @@ namespace weblog
 
 			Assert.AreEqual (expectedHost, logger.ApiHost);
 			Assert.AreEqual (expectedKey, logger.ApiKey);
+			Assert.IsNotNull (logger.FinishedMetricsFlusher);
 		}
-	
+			
 		[Test()]
 		public void should_throw_exception_if_empty_uri ()
 		{
@@ -132,8 +155,9 @@ namespace weblog
 			Assert.AreSame (origFinishedTimers, drainedTimers);
 
 			Assert.AreNotSame (drainedTimers, logger.GetFinishedTimers());
-			Assert.AreEqual (0, logger.GetFinishedTimers());
+			Assert.AreEqual (0, logger.GetFinishedTimers().Count);
 		}
 	}
+
 }
 
