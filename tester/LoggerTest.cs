@@ -9,7 +9,7 @@ namespace weblog
 	{
 
 		Logger MakeLogger(){
-			return new Logger ("some_host", "fake_api_key", new MockFinishedMetricsFlusher());
+			return new Logger (new MockFinishedMetricsFlusher());
 		}
 
 		class MockFinishedMetricsFlusher : FinishedMetricsFlusher {
@@ -23,42 +23,26 @@ namespace weblog
 		[Test()]
 		public void should_be_configured_via_constructor_params ()
 		{
-			String expectedHost = "host";
-			String expectedKey = "api-key";
 			FinishedMetricsFlusher expectedFlusher = new MockFinishedMetricsFlusher ();
 
-			Logger logger = new Logger (expectedHost, expectedKey, expectedFlusher);
+			Logger logger = new Logger (expectedFlusher);
 
-			Assert.AreEqual (expectedHost, logger.ApiHost);
-			Assert.AreEqual (expectedKey, logger.ApiKey);
 			Assert.AreSame (expectedFlusher, logger.FinishedMetricsFlusher);
 		}
 
 		[Test()]
-		public void should_be_create_a_flusher_when_not_provided ()
-		{
-			String expectedHost = "host";
-			String expectedKey = "api-key";
-
-			Logger logger = new Logger (expectedHost, expectedKey);
-
-			Assert.AreEqual (expectedHost, logger.ApiHost);
-			Assert.AreEqual (expectedKey, logger.ApiKey);
-			Assert.IsNotNull (logger.FinishedMetricsFlusher);
-		}
-			
-		[Test()]
-		public void should_throw_exception_if_empty_uri ()
+		public void should_throw_exception_if_flusher_not_provided ()
 		{
 			try {
-				new Logger("", "");
-				Assert.Fail("expected an exception due to an empty uri");
+				new Logger (null);
+				Assert.Fail("expected an exception due null flusher");
 			}
 			catch(System.ArgumentException ex) {
 				Assert.IsNotNull (ex);
 			}
 		}
-		
+			
+
 		[Test()]
 		public void it_should_sanitize_invalid_names() 
 		{
@@ -179,13 +163,26 @@ namespace weblog
 
 		[Test()]
 		public void should_be_configured_via_constructor_params(){
-			//fixme: the Logger<->Flusher API relationship is broken.  
-			//A [Mock] flusher instance is required to instantiate an AsyncFlusher? bad idea.
-			Logger logger = new Logger ("host", "key", new MockFinishedMetricsFlusher ());
 			LoggerAPIConnection apiConnection = new MockLoggerAPIConnection ();
-			AsyncFinishedMetricsFlusher flusher = new AsyncFinishedMetricsFlusher (logger, apiConnection);
+			AsyncFinishedMetricsFlusher flusher = new AsyncFinishedMetricsFlusher (apiConnection);
 
 			Assert.AreSame (apiConnection, flusher.LoggerAPIConnection);
+		}
+	}
+
+	[TestFixture()]
+	public class LoggerAPIConnectionWSTest {
+
+		[Test()]
+		public void should_be_configured_via_constructor_params(){
+
+			String expectedKey = "key";
+			String expectedHost = "somehost:42";
+			String expectedUrl = "ws://" + expectedHost + "/log/ws";
+			LoggerAPIConnectionWS apiConn = new LoggerAPIConnectionWS (expectedHost, expectedKey);
+
+			Assert.AreEqual (expectedKey, apiConn.ApiKey);
+			Assert.AreEqual (expectedUrl, apiConn.ApiUrl);
 		}
 	}
 

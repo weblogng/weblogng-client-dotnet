@@ -15,35 +15,22 @@ namespace weblog
 	public class Logger
 	{
 		private String id;
-		private String apiKey;
-		private String apiHost;
 		private FinishedMetricsFlusher finishedMetricsFlusher;
 		private Object finishedTimersLock = new Object();
 
 		private LinkedList<Timer> FinishedTimers = new LinkedList<Timer>();
 
-		public Logger (String _apiHost, String _apiKey, FinishedMetricsFlusher flusher=null)
+		public Logger (FinishedMetricsFlusher flusher)
 		{
 			Console.WriteLine ("WeblogNG: initializing...");
 			this.id = System.Guid.NewGuid ().ToString ();
-			this.apiHost = _apiHost;
-			this.apiKey = _apiKey;
 
 			if (flusher == null) {
-				this.finishedMetricsFlusher = new AsyncFinishedMetricsFlusher (this, new LoggerAPIConnectionWS (this.apiHost, this.apiKey));
+				throw new ArgumentException ("Logger requires a FinishedMetricsFlusher, but was null");
 			} else {
 				this.finishedMetricsFlusher = flusher;
 			}
-		}
 
-		public String ApiHost
-		{
-			get { return apiHost; }
-		}
-
-		public String ApiKey
-		{
-			get { return apiKey; }
 		}
 
 		public FinishedMetricsFlusher FinishedMetricsFlusher 
@@ -120,7 +107,7 @@ namespace weblog
 
 		override public String ToString ()
 		{
-			return String.Format ("[Logger id: {0}, apiHost: {1}, apiKey: #{2} ]", id, apiHost, apiKey);
+			return String.Format ("[Logger id: {0}, flusher: {1} ]", id, finishedMetricsFlusher);
 		}
 	}
 
@@ -148,7 +135,7 @@ namespace weblog
 		//retaining a reference to flushFinishedTimersTimer to avoid GC, but is this necessary?
 		private System.Threading.Timer flushFinishedTimersTimer;
 
-		public AsyncFinishedMetricsFlusher(Logger logger, LoggerAPIConnection apiConnection)
+		public AsyncFinishedMetricsFlusher(LoggerAPIConnection apiConnection)
 		{
 			this.logger = logger;
 			this.apiConnection = apiConnection;
@@ -199,6 +186,16 @@ namespace weblog
 			websocket.MessageReceived += new EventHandler<MessageReceivedEventArgs> (websocket_MessageReceived);
 			websocket.Open ();
 			Console.WriteLine ("Weblogng: Websocket version:" + websocket.Version);
+		}
+
+		public String ApiKey
+		{
+			get { return this.apiKey; }
+		}
+
+		public String ApiUrl 
+		{
+			get { return this.apiUrl; }
 		}
 
 
