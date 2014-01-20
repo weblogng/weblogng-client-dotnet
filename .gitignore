@@ -3,5 +3,4 @@ bin/
 *.pidb
 *.in
 tester/test-results/
-
-
+*/obj/
