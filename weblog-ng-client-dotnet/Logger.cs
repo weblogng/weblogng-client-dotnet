@@ -139,20 +139,15 @@ namespace weblog
 		//that is passed as a parameter on each timer callback.  providing the Logger instance in the state object
 		//will help avoid the currently-awkward construction requirement of the flusher needing a Logger and the Logger wanting a Flusher.
 
-		private Logger logger;
 		private LoggerAPIConnection apiConnection;
-
-		//retaining a reference to flushFinishedTimersTimer to avoid GC, but is this necessary?
-		private System.Threading.Timer flushFinishedTimersTimer;
 
 		public AsyncFinishedMetricsFlusher(LoggerAPIConnection apiConnection)
 		{
-			this.logger = logger;
 			this.apiConnection = apiConnection;
 
 			AutoResetEvent autoEvent = new AutoResetEvent (false);
 			TimerCallback callback = this.Flush;
-			flushFinishedTimersTimer = new System.Threading.Timer (callback, autoEvent, 10000, 10000);
+			new System.Threading.Timer (callback, autoEvent, 10000, 10000);
 		}
 
 		public LoggerAPIConnection LoggerAPIConnection 
@@ -162,9 +157,12 @@ namespace weblog
 
 		public void Flush(Object stateInfo)
 		{
+			Console.WriteLine ("AsyncFinishedMetricsFlusher.Flush called; stateInfo: {0}", stateInfo);
+
+			//todo: retrieve logger from stateInfo
 			//this method must be re-entrant safe.  it is possible for this method to be executed simultaneously on two threads
-			LinkedList<Timer> timersToFlush = logger.DrainFinishedTimersForFlush ();
-			Task.Factory.StartNew (() => apiConnection.sendMetrics(timersToFlush));
+			//LinkedList<Timer> timersToFlush = logger.DrainFinishedTimersForFlush ();
+			//Task.Factory.StartNew (() => apiConnection.sendMetrics(timersToFlush));
 
 			AutoResetEvent autoEvent = (AutoResetEvent)stateInfo;
 			autoEvent.Set ();
