@@ -27,7 +27,7 @@ namespace weblog
 		public void Dispose ()
 		{
 			Watch.Stop();
-			Logger.addToFinishedTimers(this);
+			Logger.AddToFinishedTimers(this);
 		}
 		
 		public long timeElapsedMilliseconds() {

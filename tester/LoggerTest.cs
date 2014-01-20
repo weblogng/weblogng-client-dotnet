@@ -1,22 +1,38 @@
 using System;
+using System.Collections.Generic;
 using NUnit.Framework;
-using weblog;
 
-namespace weblogclienttester
+namespace weblog
 {
 	[TestFixture()]
 	public class LoggerTest
 	{
+
+		Logger MakeLogger(){
+			return new Logger ("some_host", "fake_api_key");
+		}
+
+		[Test()]
+		public void should_be_configured_via_constructor_params ()
+		{
+			String expectedHost = "host";
+			String expectedKey = "api-key";
+
+			Logger logger = new Logger (expectedHost, expectedKey);
+
+			Assert.AreEqual (expectedHost, logger.ApiHost);
+			Assert.AreEqual (expectedKey, logger.ApiKey);
+		}
 	
 		[Test()]
 		public void should_throw_exception_if_empty_uri ()
 		{
 			try {
-				Logger logger = new Logger("", "");
-				Assert.Fail();
+				new Logger("", "");
+				Assert.Fail("expected an exception due to an empty uri");
 			}
 			catch(System.ArgumentException ex) {
-			
+				Assert.IsNotNull (ex);
 			}
 		}
 		
@@ -26,7 +42,7 @@ namespace weblogclienttester
 			string[] chars = {@".", @"!", @"," , @";", @":", @"?", @"/", @"\", @"@", @"#", @"$", @"%", @"^", @"&", @"*", @"(", @")"};
 			   
 			foreach(String forbiddenChar in chars) {
-				String actualMetricName = Logger.sanitizeMetricName(String.Format ("metric-name_1{0}2", forbiddenChar));
+				String actualMetricName = LoggerAPIConnectionWS.sanitizeMetricName(String.Format ("metric-name_1{0}2", forbiddenChar));
 				Assert.AreEqual( @"metric-name_1_2", actualMetricName);
 			}
 		}
@@ -35,7 +51,7 @@ namespace weblogclienttester
 		[Test()]
 		public void createTimer_should_return_new_running_timer() 
 		{
-			Logger logger = new Logger("http://some_host", "fake_api_key");
+			Logger logger = MakeLogger();
 			Timer timer = logger.CreateTimer("some_metric");
 			Assert.IsNotNull(timer);
 			Assert.IsTrue (timer.IsRunning());
@@ -43,7 +59,7 @@ namespace weblogclienttester
 		
 		[Test()] 
 		public void timer_should_have_metric_name() {
-			Logger logger = new Logger("http://some_host", "fake_api_key");
+			Logger logger = MakeLogger();
 			
 			Timer timer = logger.CreateTimer("operation_to_measure_timing");
 			
@@ -54,7 +70,7 @@ namespace weblogclienttester
 		[Test()]
 		public void timer_should_not_run_after_dispose() 
 		{
-			Logger logger = new Logger("http://some_host", "fake_api_key");
+			Logger logger = MakeLogger();
 			Timer timer = new Timer("metric_name", logger);
 			Assert.IsTrue(timer.IsRunning());
 			
@@ -67,20 +83,20 @@ namespace weblogclienttester
 		[Test()]
 		public void logger_should_accumulate_finished_timers() 
 		{
-			Logger logger = new Logger("http://some_host", "fake_api_key");
+			Logger logger = MakeLogger();
 			
 			Timer timer = logger.CreateTimer("operation_to_measure_timing");
 			
 			timer.Dispose();
 			
-			Assert.Contains(timer, logger.getFinishedTimers());
+			Assert.Contains(timer, logger.GetFinishedTimers());
 		}
 		
 		
 		[Test()]
 		public void using_should_time_block_of_code() 
 		{
-			Logger logger = new Logger("http://some_host", "fake_api_key");
+			Logger logger = MakeLogger();
 			using(logger.CreateTimer("operation_a_execution_time"))
 			{ 
                                
@@ -88,11 +104,35 @@ namespace weblogclienttester
                                
             }
 			
-			Assert.AreEqual(1, logger.getFinishedTimers().Count);
+			Assert.AreEqual(1, logger.GetFinishedTimers().Count);
 			
-			Timer t = logger.getFinishedTimers().First.Value;
+			Timer t = logger.GetFinishedTimers().First.Value;
 			
 			Assert.GreaterOrEqual(t.timeElapsedMilliseconds(), 75L);
+		}
+
+		[Test()]
+		public void draining_finished_timers_should_result_in_new_empty_collection(){
+			//DrainFinishedTimersForFlush
+
+			Logger logger = MakeLogger();
+
+			ICollection<Timer> origFinishedTimers = logger.GetFinishedTimers ();
+
+			Assert.AreEqual (0, origFinishedTimers.Count);
+
+			Timer timer = new Timer ("an_operation", logger);
+			logger.AddToFinishedTimers (timer);
+
+			Assert.AreSame (origFinishedTimers, logger.GetFinishedTimers ());
+			Assert.Contains (timer, logger.GetFinishedTimers ());
+			Assert.AreEqual (1, origFinishedTimers.Count);
+
+			ICollection<Timer> drainedTimers = logger.DrainFinishedTimersForFlush ();
+			Assert.AreSame (origFinishedTimers, drainedTimers);
+
+			Assert.AreNotSame (drainedTimers, logger.GetFinishedTimers());
+			Assert.AreEqual (0, logger.GetFinishedTimers());
 		}
 	}
 }
