@@ -74,7 +74,30 @@ namespace weblog
 			
 			Assert.AreEqual("operation_to_measure_timing", timer.MetricName);
 		}
-		
+
+		[Test()]
+		public void RecordStart_should_return_new_running_timer_for_metric_name() 
+		{
+			String expectedName = "some_metric";
+			Logger logger = MakeLogger();
+			Timer timer = logger.RecordStart(expectedName);
+
+			Assert.IsNotNull(timer);
+			Assert.IsTrue (timer.IsRunning());
+			Assert.AreEqual (expectedName, timer.MetricName);
+		}
+
+		[Test()]
+		public void RecordStart_should_retain_the_created_timer(){
+			Logger logger = MakeLogger();
+			String expectedName = "some_metric";
+
+			Assert.IsFalse(logger.HasTimer (expectedName));
+
+			logger.RecordStart(expectedName);
+
+			Assert.IsTrue(logger.HasTimer (expectedName));
+		}
 		
 		[Test()]
 		public void timer_should_not_run_after_dispose() 

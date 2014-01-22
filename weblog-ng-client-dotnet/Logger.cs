@@ -16,6 +16,7 @@ namespace weblog
 	{
 		private String id;
 		private FinishedMetricsFlusher finishedMetricsFlusher;
+		private IDictionary<String, Timer> inProgressTimers = new Dictionary<String, Timer> ();
 
 		public Logger (FinishedMetricsFlusher flusher)
 		{
@@ -53,9 +54,16 @@ namespace weblog
 		}
 
 
-		public void recordStart (String metricName)
+		public Timer RecordStart (String metricName)
 		{
-			throw new Exception ("Not implemented yet");
+			Timer timer = CreateTimer (metricName);
+			this.inProgressTimers.Add (metricName, timer);
+			return timer;
+		}
+
+		public bool HasTimer(String metricName)
+		{
+			return this.inProgressTimers.ContainsKey (metricName);
 		}
 		
 
