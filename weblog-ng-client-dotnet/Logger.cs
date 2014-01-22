@@ -16,6 +16,7 @@ namespace weblog
 	{
 		private String id;
 		private FinishedMetricsFlusher finishedMetricsFlusher;
+		private IDictionary<String, Timer> inProgressTimers = new Dictionary<String, Timer> ();
 
 		public Logger (FinishedMetricsFlusher flusher)
 		{
@@ -35,6 +36,24 @@ namespace weblog
 			get { return this.finishedMetricsFlusher; }
 		}
 
+		///<summary>
+		/// Creates a Timer and returns it.  The Timer's Stopwatch will be started
+		/// automatically.  The Timer class is Disposable so it may be used with a
+		/// using statment to time a block of code.
+		/// </summary>
+		/// 
+		/// <example>
+		/// <code>
+		/// using(logger.CreateTimer("operation_a_execution_time"))
+		/// { 
+		///   // ... perform operation 'a' ...
+		/// }
+		/// </code>
+		/// </example>
+		/// 
+		/// <returns>
+		/// Returns the timer that was created and started.
+		/// </returns>
 		public Timer CreateTimer(String MetricName) 
 		{
 			return new Timer(MetricName, this);	
@@ -52,23 +71,81 @@ namespace weblog
 			return this.finishedMetricsFlusher.GetFinishedTimers ();
 		}
 
-
-		public void recordStart (String metricName)
+		///<summary>
+		/// Creates a Timer, stores it in a Dictionary held by the Logger for later refernce, and returns it.  
+		/// The Timer's Stopwatch will be started automatically.  The Dictionary is not thread-safe, do not use
+		/// RecordStart or its companion, RecordFinish from code where a given metric name may be used concurrently.
+		/// </summary>
+		/// 
+		/// <example>
+		/// <code>
+		/// logger.RecordStart ("operation_a_execution_time");
+		/// // ... perform operation 'a' ...
+		/// logger.RecordFinish ("operation_a_execution_time");
+		/// </code>
+		/// </example>
+		/// 
+		/// <returns>
+		/// Returns the timer that was created and started.
+		/// </returns>
+		public Timer RecordStart (String metricName)
 		{
-			throw new Exception ("Not implemented yet");
+			Timer timer = CreateTimer (metricName);
+			this.inProgressTimers.Add (metricName, timer);
+			return timer;
+		}
+
+		public bool HasTimer(String metricName)
+		{
+			return this.inProgressTimers.ContainsKey (metricName);
 		}
 		
 
-		public void recordFinish (String metricName)
+		///<summary>
+		/// Locates and removes the timer with the provided metric name from the Logger's Dictionary and marks it as finished.
+		/// The finished timer is queued for flushing.  The Dictionary is not thread-safe, do not use
+		/// RecordFinish or its companion, RecordStart from code where a given metric name may be used concurrently.
+		/// </summary>
+		/// 
+		/// <example>
+		/// <code>
+		/// logger.RecordStart ("operation_a_execution_time");
+		/// // ... perform operation 'a' ...
+		/// logger.RecordFinish ("operation_a_execution_time");
+		/// </code>
+		/// </example>
+		/// 
+		/// <returns>
+		/// Returns the timer that was finished, null if one by that name was not present in logger's collection.
+		/// </returns>
+		public Timer RecordFinish (String metricName)
 		{
-			throw new Exception ("Not implemented yet");
+			Timer timer = this.inProgressTimers [metricName];
+			if (timer != null) {
+				this.inProgressTimers.Remove (metricName);
+				timer.Dispose ();
+			}
+			return timer;
 		}
 		
 		
-
-		public void recordFinishAndSendMetric (String metricName)
+		///<summary>
+		/// Records that the timer for the provided metricName has finished and triggers a flush 
+		/// of the metrics to the API.
+		/// </summary>
+		/// 
+		/// <returns>
+		/// Returns the timer that was finished, null if one by that name was not present in logger's collection.
+		/// </returns>
+		public Timer RecordFinishAndSendMetric (String metricName)
 		{
-			throw new Exception ("Not implemented yet");
+			Timer timer = this.RecordFinish (metricName);
+
+			if(timer != null){
+				this.finishedMetricsFlusher.Flush (new object());
+			}
+
+			return timer;
 		}
 		
 		
@@ -91,10 +168,13 @@ namespace weblog
 			return String.Format ("[Logger id: {0}, flusher: {1} ]", id, finishedMetricsFlusher);
 		}
 
-		/**
-		 * Creates a Logger configured to log to production asynchronously over websockets using
-		 * the provided api key.
-		 */
+		///<summary>
+		/// Creates a Logger configured to log to production asynchronously over websockets 
+		/// using the provided api key.
+		/// </summary>
+		/// <returns>
+		/// A logger initialized for production.
+		/// </returns>
 		public static Logger CreateAsyncLogger(String apiKey){
 			LoggerAPIConnectionWS apiConnection = new LoggerAPIConnectionWS ("ec2-174-129-123-237.compute-1.amazonaws.com:9000", "93c5a127-e2a4-42cc-9cc6-cf17fdac8a7f");
 			AsyncFinishedMetricsFlusher flusher = new AsyncFinishedMetricsFlusher (apiConnection);
