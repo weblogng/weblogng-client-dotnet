@@ -66,7 +66,8 @@ namespace weblog
 		}
 		
 		[Test()] 
-		public void timer_should_have_metric_name() {
+		public void createTimer_should_return_timer_with_provided_metric_name()
+		{
 			Logger logger = MakeLogger();
 			
 			Timer timer = logger.CreateTimer("operation_to_measure_timing");
