@@ -84,10 +84,19 @@ namespace weblog
 		}
 		
 		
-
-		public void recordFinishAndSendMetric (String metricName)
+		/**
+		 * Records that the timer for the provided metricName has finished and triggers 
+		 * a flush of the metrics to the API.
+		 */
+		public Timer RecordFinishAndSendMetric (String metricName)
 		{
-			throw new Exception ("Not implemented yet");
+			Timer timer = this.RecordFinish (metricName);
+
+			if(timer != null){
+				this.finishedMetricsFlusher.Flush (new object());
+			}
+
+			return timer;
 		}
 		
 		

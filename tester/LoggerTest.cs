@@ -6,8 +6,13 @@ namespace weblog
 {
 	class MockFinishedMetricsFlusher : BaseFinishedMetricsFlusher {
 
-		override public void Flush (Object stateInfo){
-			Console.WriteLine ("Flushed with " + stateInfo.ToString());
+		public int FlushCount { get; set; }
+
+		override public void Flush (Object stateInfo)
+		{
+			DrainFinishedTimersForFlush ();
+			FlushCount++;
+			Console.WriteLine ("Flushed with " + stateInfo.ToString() + " flush count: " + FlushCount);
 		}
 
 	}
@@ -113,6 +118,24 @@ namespace weblog
 			Assert.AreSame (startedTimer, finishedTimer);
 			Assert.IsFalse (finishedTimer.IsRunning());
 			Assert.Contains(finishedTimer, logger.GetFinishedTimers());
+		}
+
+		[Test()]
+		public void RecordFinishAndSendMetric_should_flush_timers()
+		{
+			MockFinishedMetricsFlusher flusher = new MockFinishedMetricsFlusher ();
+			Logger logger = new Logger (flusher);
+			String expectedName = "some_metric";
+
+			Assert.AreEqual (0, flusher.FlushCount);
+			Assert.AreEqual(0, logger.FinishedMetricsFlusher.GetFinishedTimers ().Count);
+
+			Timer startedTimer = logger.RecordStart (expectedName);
+			Timer finishedTimer = logger.RecordFinishAndSendMetric (expectedName);
+
+			Assert.AreEqual (startedTimer, finishedTimer);
+			Assert.AreEqual (1, flusher.FlushCount);
+			Assert.AreEqual(0, logger.FinishedMetricsFlusher.GetFinishedTimers ().Count);
 		}
 		
 		[Test()]
