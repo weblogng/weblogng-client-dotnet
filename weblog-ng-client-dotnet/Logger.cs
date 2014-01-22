@@ -67,9 +67,20 @@ namespace weblog
 		}
 		
 
-		public void recordFinish (String metricName)
+		/**
+		 * Records that the timer for the provided metricName has finished.
+		 * 
+		 * Returns the timer that was finished, null if one by that name was not 
+		 * present in logger's collection.
+		 */
+		public Timer RecordFinish (String metricName)
 		{
-			throw new Exception ("Not implemented yet");
+			Timer timer = this.inProgressTimers [metricName];
+			if (timer != null) {
+				this.inProgressTimers.Remove (metricName);
+				timer.Dispose ();
+			}
+			return timer;
 		}
 		
 		

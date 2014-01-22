@@ -98,6 +98,22 @@ namespace weblog
 
 			Assert.IsTrue(logger.HasTimer (expectedName));
 		}
+
+		[Test()]
+		public void RecordFinish_should_transfer_timer_from_inProgress_to_finished()
+		{
+			Logger logger = MakeLogger ();
+			String expectedName = "some_metric";
+
+			Timer startedTimer = logger.RecordStart (expectedName);
+			Assert.IsTrue (startedTimer.IsRunning());
+
+			Timer finishedTimer = logger.RecordFinish (expectedName);
+
+			Assert.AreSame (startedTimer, finishedTimer);
+			Assert.IsFalse (finishedTimer.IsRunning());
+			Assert.Contains(finishedTimer, logger.GetFinishedTimers());
+		}
 		
 		[Test()]
 		public void timer_should_not_run_after_dispose() 
