@@ -147,14 +147,6 @@ namespace weblog
 			return timer;
 		}
 		
-		
-
-		public void executeWithTiming (String metricName, Func<object, object> functionToExecute)
-		{
-			throw new Exception ("Not implemented yet");				
-		}
-		
-		
 
 		private long epochTimeInMilliseconds ()
 		{
