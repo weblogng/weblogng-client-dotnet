@@ -325,22 +325,22 @@ namespace weblog
 
 		private void websocket_Opened (object sender, EventArgs e)
 		{
-			Console.WriteLine ("Weblogng: Connected");
+			Console.WriteLine ("WeblogNG: Connected");
 		}
 
 		private void websocket_Error (object sender, ErrorEventArgs e)
 		{
-			Console.WriteLine ("Weblogng: Error ");
+			Console.WriteLine ("WeblogNG: Error ");
 		}
 
 		private void websocket_MessageReceived (object sender, MessageReceivedEventArgs e)
 		{
-			Console.WriteLine ("Weblogng: Message " + e.Message);
+			Console.WriteLine ("WeblogNG: Message " + e.Message);
 		}
 
 		private static void websocket_Closed (object sender, System.EventArgs e)
 		{
-			Console.WriteLine ("Weblogng: Connection closed");
+			Console.WriteLine ("WeblogNG: Connection closed");
 		}
 
 
