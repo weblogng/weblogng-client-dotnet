@@ -9,6 +9,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Threading.Tasks.Schedulers;
 
 namespace weblog
 {
@@ -224,10 +225,14 @@ namespace weblog
 		//http://msdn.microsoft.com/en-us/library/9hk12d4y(v=vs.110).aspx
 
 		private LoggerAPIConnection apiConnection;
+		private TaskFactory taskFactory;
 
 		internal AsyncFinishedMetricsFlusher(LoggerAPIConnection apiConnection)
 		{
 			this.apiConnection = apiConnection;
+
+			LimitedConcurrencyLevelTaskScheduler lcts = new LimitedConcurrencyLevelTaskScheduler(1);
+			this.taskFactory = new TaskFactory(lcts);
 
 			TimerCallback callback = this.Flush;
 			new System.Threading.Timer (callback, new object(), 10000, 10000);
@@ -247,7 +252,7 @@ namespace weblog
 			LinkedList<Timer> timersToFlush = DrainFinishedTimersForFlush ();
 
 			if (timersToFlush.Count > 0) {
-				Task.Factory.StartNew (() => apiConnection.sendMetrics(timersToFlush));
+				taskFactory.StartNew (() => apiConnection.sendMetrics(timersToFlush));
 			}
 
 		}
