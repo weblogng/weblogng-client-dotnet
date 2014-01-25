@@ -32,7 +32,7 @@ namespace weblog
 
 		}
 
-		public FinishedMetricsFlusher FinishedMetricsFlusher 
+		internal FinishedMetricsFlusher FinishedMetricsFlusher 
 		{
 			get { return this.finishedMetricsFlusher; }
 		}
@@ -59,15 +59,13 @@ namespace weblog
 		{
 			return new Timer(MetricName, this);	
 		}
-		
-		//fixme: should be internal
-		public void AddToFinishedTimers(Timer timer)
+
+		internal void AddToFinishedTimers(Timer timer)
 		{
 			this.finishedMetricsFlusher.AddToFinishedTimers (timer);
 		}
 
-		//fixme: should be internal
-		public LinkedList<Timer> GetFinishedTimers()
+		internal LinkedList<Timer> GetFinishedTimers()
 		{
 			return this.finishedMetricsFlusher.GetFinishedTimers ();
 		}
@@ -96,7 +94,7 @@ namespace weblog
 			return timer;
 		}
 
-		public bool HasTimer(String metricName)
+		internal bool HasTimer(String metricName)
 		{
 			return this.inProgressTimers.ContainsKey (metricName);
 		}
@@ -192,7 +190,7 @@ namespace weblog
 		LinkedList<Timer> GetFinishedTimers ();
 	}
 
-	public abstract class BaseFinishedMetricsFlusher : FinishedMetricsFlusher {
+	abstract class BaseFinishedMetricsFlusher : FinishedMetricsFlusher {
 
 		private Object finishedTimersLock = new Object();
 		private LinkedList<Timer> FinishedTimers = new LinkedList<Timer>();
@@ -229,7 +227,7 @@ namespace weblog
 	}
 
 
-	public class AsyncFinishedMetricsFlusher : BaseFinishedMetricsFlusher
+	class AsyncFinishedMetricsFlusher : BaseFinishedMetricsFlusher
 	{
 		//there are a number of options (understatement) for implementing async operations in C#:
 		//best bet currently looks like using a 'Thread Timer:
