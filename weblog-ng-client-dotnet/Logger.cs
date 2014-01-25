@@ -19,7 +19,7 @@ namespace weblog
 		private FinishedMetricsFlusher finishedMetricsFlusher;
 		private IDictionary<String, Timer> inProgressTimers = new Dictionary<String, Timer> ();
 
-		public Logger (FinishedMetricsFlusher flusher)
+		internal Logger (FinishedMetricsFlusher flusher)
 		{
 			Console.WriteLine ("WeblogNG: initializing...");
 			this.id = System.Guid.NewGuid ().ToString ();
@@ -181,12 +181,11 @@ namespace weblog
 		}
 	}
 	
-	public interface FinishedMetricsFlusher {
+	internal interface FinishedMetricsFlusher {
 		void Flush (Object stateInfo);
 
-		//fixme: should be internal
 		void AddToFinishedTimers (Timer timer);
-		//fixme: should be internal
+
 		LinkedList<Timer> GetFinishedTimers ();
 	}
 
@@ -197,8 +196,6 @@ namespace weblog
 
 		abstract public void Flush (Object stateInfo);
 
-
-		//fixme: should be internal
 		public void AddToFinishedTimers(Timer timer)
 		{
 			lock (finishedTimersLock) {
@@ -206,7 +203,6 @@ namespace weblog
 			}
 		}
 
-		//fixme: should be internal
 		public LinkedList<Timer> GetFinishedTimers()
 		{
 			lock (finishedTimersLock) {
@@ -214,8 +210,7 @@ namespace weblog
 			}
 		}
 
-		//fixme: should be internal
-		public LinkedList<Timer> DrainFinishedTimersForFlush()
+		internal LinkedList<Timer> DrainFinishedTimersForFlush()
 		{
 			LinkedList<Timer> oldFinishedTimers;
 			lock (finishedTimersLock) {
@@ -242,7 +237,7 @@ namespace weblog
 
 		private LoggerAPIConnection apiConnection;
 
-		public AsyncFinishedMetricsFlusher(LoggerAPIConnection apiConnection)
+		internal AsyncFinishedMetricsFlusher(LoggerAPIConnection apiConnection)
 		{
 			this.apiConnection = apiConnection;
 
@@ -250,7 +245,7 @@ namespace weblog
 			new System.Threading.Timer (callback, new object(), 10000, 10000);
 		}
 
-		public LoggerAPIConnection LoggerAPIConnection 
+		internal LoggerAPIConnection LoggerAPIConnection 
 		{
 			get { return this.apiConnection; }
 		}
@@ -281,9 +276,8 @@ namespace weblog
 		}
 
 	}
-
-	//fixme: should be internal
-	public interface LoggerAPIConnection {
+	
+	internal interface LoggerAPIConnection {
 		void sendMetrics(ICollection<Timer> timers);
 	}
 
