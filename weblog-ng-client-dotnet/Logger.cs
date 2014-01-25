@@ -223,10 +223,6 @@ namespace weblog
 		//could also use the AsyncOperationManager, but still need something to kick-off the operation:
 		//http://msdn.microsoft.com/en-us/library/9hk12d4y(v=vs.110).aspx
 
-		//the Logger and maybe the LoggerAPIConnection should be made available via the [custom] 'state object'
-		//that is passed as a parameter on each timer callback.  providing the Logger instance in the state object
-		//will help avoid the currently-awkward construction requirement of the flusher needing a Logger and the Logger wanting a Flusher.
-
 		private LoggerAPIConnection apiConnection;
 
 		internal AsyncFinishedMetricsFlusher(LoggerAPIConnection apiConnection)
