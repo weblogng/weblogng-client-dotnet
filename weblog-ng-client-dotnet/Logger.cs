@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 
 namespace weblog
 {
+
 	public class Logger
 	{
 		private String id;
@@ -272,14 +273,23 @@ namespace weblog
 
 	}
 
+	class MetricUtilities 
+	{
+		private static String INVALID_CHAR_PATTERN = "[^\\w\\d_-]";
+
+		internal static String sanitizeMetricName (String metricName)
+		{
+			return Regex.Replace(metricName, INVALID_CHAR_PATTERN, "_"); 
+		}
+
+	}
+
 	//fixme: should be internal
 	public interface LoggerAPIConnection {
 		void sendMetrics(ICollection<Timer> timers);
 	}
 
-	public class LoggerAPIConnectionWS : LoggerAPIConnection {
-
-		private static String INVALID_CHAR_PATTERN = "[^\\w\\d_-]";
+	internal class LoggerAPIConnectionWS : LoggerAPIConnection {
 
 		private String apiKey;
 		private String apiUrl;
@@ -308,12 +318,6 @@ namespace weblog
 			get { return this.apiUrl; }
 		}
 
-
-		public static String sanitizeMetricName (String metricName)
-		{
-			return Regex.Replace(metricName, INVALID_CHAR_PATTERN, "_"); 
-		}
-
 		override public String ToString ()
 		{
 			return String.Format ("[LoggerAPIConnectionWS apiUrl: {1}, apiKey: #{2}]", apiUrl, apiKey);
@@ -324,7 +328,7 @@ namespace weblog
 		 */
 		private String createMetricMessage (String metricName, String metricValue)
 		{
-			String sanitizedMetricName = sanitizeMetricName (metricName);
+			String sanitizedMetricName = MetricUtilities.sanitizeMetricName (metricName);
 			return String.Format ("v1.metric {0} {1} {2} ", apiKey, sanitizedMetricName, metricValue);
 		}
 

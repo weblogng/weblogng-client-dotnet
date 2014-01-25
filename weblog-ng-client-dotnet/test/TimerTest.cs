@@ -1,7 +1,8 @@
 using NUnit.Framework;
 using System;
+using weblog;
 
-namespace weblog
+namespace weblog.test
 {
 	[TestFixture ()]
 	public class TimerTest
