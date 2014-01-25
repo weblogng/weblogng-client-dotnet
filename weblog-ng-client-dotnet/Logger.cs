@@ -12,13 +12,14 @@ using System.Threading.Tasks;
 
 namespace weblog
 {
+
 	public class Logger
 	{
 		private String id;
 		private FinishedMetricsFlusher finishedMetricsFlusher;
 		private IDictionary<String, Timer> inProgressTimers = new Dictionary<String, Timer> ();
 
-		public Logger (FinishedMetricsFlusher flusher)
+		internal Logger (FinishedMetricsFlusher flusher)
 		{
 			Console.WriteLine ("WeblogNG: initializing...");
 			this.id = System.Guid.NewGuid ().ToString ();
@@ -31,7 +32,7 @@ namespace weblog
 
 		}
 
-		public FinishedMetricsFlusher FinishedMetricsFlusher 
+		internal FinishedMetricsFlusher FinishedMetricsFlusher 
 		{
 			get { return this.finishedMetricsFlusher; }
 		}
@@ -58,15 +59,13 @@ namespace weblog
 		{
 			return new Timer(MetricName, this);	
 		}
-		
-		//fixme: should be internal
-		public void AddToFinishedTimers(Timer timer)
+
+		internal void AddToFinishedTimers(Timer timer)
 		{
 			this.finishedMetricsFlusher.AddToFinishedTimers (timer);
 		}
 
-		//fixme: should be internal
-		public LinkedList<Timer> GetFinishedTimers()
+		internal LinkedList<Timer> GetFinishedTimers()
 		{
 			return this.finishedMetricsFlusher.GetFinishedTimers ();
 		}
@@ -95,7 +94,7 @@ namespace weblog
 			return timer;
 		}
 
-		public bool HasTimer(String metricName)
+		internal bool HasTimer(String metricName)
 		{
 			return this.inProgressTimers.ContainsKey (metricName);
 		}
@@ -182,24 +181,21 @@ namespace weblog
 		}
 	}
 	
-	public interface FinishedMetricsFlusher {
+	internal interface FinishedMetricsFlusher {
 		void Flush (Object stateInfo);
 
-		//fixme: should be internal
 		void AddToFinishedTimers (Timer timer);
-		//fixme: should be internal
+
 		LinkedList<Timer> GetFinishedTimers ();
 	}
 
-	public abstract class BaseFinishedMetricsFlusher : FinishedMetricsFlusher {
+	abstract class BaseFinishedMetricsFlusher : FinishedMetricsFlusher {
 
 		private Object finishedTimersLock = new Object();
 		private LinkedList<Timer> FinishedTimers = new LinkedList<Timer>();
 
 		abstract public void Flush (Object stateInfo);
 
-
-		//fixme: should be internal
 		public void AddToFinishedTimers(Timer timer)
 		{
 			lock (finishedTimersLock) {
@@ -207,7 +203,6 @@ namespace weblog
 			}
 		}
 
-		//fixme: should be internal
 		public LinkedList<Timer> GetFinishedTimers()
 		{
 			lock (finishedTimersLock) {
@@ -215,8 +210,7 @@ namespace weblog
 			}
 		}
 
-		//fixme: should be internal
-		public LinkedList<Timer> DrainFinishedTimersForFlush()
+		internal LinkedList<Timer> DrainFinishedTimersForFlush()
 		{
 			LinkedList<Timer> oldFinishedTimers;
 			lock (finishedTimersLock) {
@@ -228,7 +222,7 @@ namespace weblog
 	}
 
 
-	public class AsyncFinishedMetricsFlusher : BaseFinishedMetricsFlusher
+	class AsyncFinishedMetricsFlusher : BaseFinishedMetricsFlusher
 	{
 		//there are a number of options (understatement) for implementing async operations in C#:
 		//best bet currently looks like using a 'Thread Timer:
@@ -243,7 +237,7 @@ namespace weblog
 
 		private LoggerAPIConnection apiConnection;
 
-		public AsyncFinishedMetricsFlusher(LoggerAPIConnection apiConnection)
+		internal AsyncFinishedMetricsFlusher(LoggerAPIConnection apiConnection)
 		{
 			this.apiConnection = apiConnection;
 
@@ -251,7 +245,7 @@ namespace weblog
 			new System.Threading.Timer (callback, new object(), 10000, 10000);
 		}
 
-		public LoggerAPIConnection LoggerAPIConnection 
+		internal LoggerAPIConnection LoggerAPIConnection 
 		{
 			get { return this.apiConnection; }
 		}
@@ -272,14 +266,22 @@ namespace weblog
 
 	}
 
-	//fixme: should be internal
-	public interface LoggerAPIConnection {
+	class MetricUtilities 
+	{
+		private static String INVALID_CHAR_PATTERN = "[^\\w\\d_-]";
+
+		internal static String sanitizeMetricName (String metricName)
+		{
+			return Regex.Replace(metricName, INVALID_CHAR_PATTERN, "_"); 
+		}
+
+	}
+	
+	internal interface LoggerAPIConnection {
 		void sendMetrics(ICollection<Timer> timers);
 	}
 
-	public class LoggerAPIConnectionWS : LoggerAPIConnection {
-
-		private static String INVALID_CHAR_PATTERN = "[^\\w\\d_-]";
+	internal class LoggerAPIConnectionWS : LoggerAPIConnection {
 
 		private String apiKey;
 		private String apiUrl;
@@ -308,12 +310,6 @@ namespace weblog
 			get { return this.apiUrl; }
 		}
 
-
-		public static String sanitizeMetricName (String metricName)
-		{
-			return Regex.Replace(metricName, INVALID_CHAR_PATTERN, "_"); 
-		}
-
 		override public String ToString ()
 		{
 			return String.Format ("[LoggerAPIConnectionWS apiUrl: {1}, apiKey: #{2}]", apiUrl, apiKey);
@@ -324,7 +320,7 @@ namespace weblog
 		 */
 		private String createMetricMessage (String metricName, String metricValue)
 		{
-			String sanitizedMetricName = sanitizeMetricName (metricName);
+			String sanitizedMetricName = MetricUtilities.sanitizeMetricName (metricName);
 			return String.Format ("v1.metric {0} {1} {2} ", apiKey, sanitizedMetricName, metricValue);
 		}
 

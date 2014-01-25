@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
+using weblog;
 
-namespace weblog
+namespace weblog.test
 {
 	class MockFinishedMetricsFlusher : BaseFinishedMetricsFlusher {
 
@@ -47,19 +48,6 @@ namespace weblog
 				Assert.IsNotNull (ex);
 			}
 		}
-			
-
-		[Test()]
-		public void it_should_sanitize_invalid_names() 
-		{
-			string[] chars = {@".", @"!", @"," , @";", @":", @"?", @"/", @"\", @"@", @"#", @"$", @"%", @"^", @"&", @"*", @"(", @")"};
-			   
-			foreach(String forbiddenChar in chars) {
-				String actualMetricName = LoggerAPIConnectionWS.sanitizeMetricName(String.Format ("metric-name_1{0}2", forbiddenChar));
-				Assert.AreEqual( @"metric-name_1_2", actualMetricName);
-			}
-		}
-		
 		
 		[Test()]
 		public void createTimer_should_return_new_running_timer() 
@@ -249,22 +237,6 @@ namespace weblog
 		}
 
 	}
-
-	[TestFixture()]
-	public class LoggerAPIConnectionWSTest {
-
-		[Test()]
-		public void should_be_configured_via_constructor_params(){
-
-			String expectedKey = "key";
-			String expectedHost = "somehost:42";
-			String expectedUrl = "ws://" + expectedHost + "/log/ws";
-			LoggerAPIConnectionWS apiConn = new LoggerAPIConnectionWS (expectedHost, expectedKey);
-
-			Assert.AreEqual (expectedKey, apiConn.ApiKey);
-			Assert.AreEqual (expectedUrl, apiConn.ApiUrl);
-		}
-	}
-
+	
 }
 
