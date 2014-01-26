@@ -278,19 +278,34 @@ namespace weblog
 
 		private String apiKey;
 		private String apiUrl;
-		private WebSocket websocket;
+		private WebSocket webSocket;
 
 		public LoggerAPIConnectionWS(String apiHost, String apiKey){
 			this.apiKey = apiKey;
 			this.apiUrl = "ws://" + apiHost + "/log/ws";
-			websocket = new WebSocket (apiUrl);
 
-			websocket.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs> (websocket_Error);
-			websocket.Opened += new EventHandler (websocket_Opened);
-			websocket.Closed += new EventHandler (websocket_Closed);
-			websocket.MessageReceived += new EventHandler<MessageReceivedEventArgs> (websocket_MessageReceived);
+			//websocket will be created lazily so that complications of websocket management do not occur during construction.
+		}
+
+		internal WebSocket GetOrCreateWebSocket(){
+			if (this.webSocket == null) {
+				this.webSocket = CreateWebSocket (this);
+			}
+
+			return this.webSocket;
+		}
+
+		static internal WebSocket CreateWebSocket(LoggerAPIConnectionWS apiConn){
+			WebSocket websocket = new WebSocket (apiConn.ApiUrl);
+
+			websocket.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs> (apiConn.websocket_Error);
+			websocket.Opened += new EventHandler (apiConn.websocket_Opened);
+			websocket.Closed += new EventHandler (apiConn.websocket_Closed);
+			websocket.MessageReceived += new EventHandler<MessageReceivedEventArgs> (apiConn.websocket_MessageReceived);
 			websocket.Open ();
+
 			Console.WriteLine ("WeblogNG: WebSocket version: " + websocket.Version);
+			return websocket;
 		}
 
 		public String ApiKey
@@ -303,9 +318,14 @@ namespace weblog
 			get { return this.apiUrl; }
 		}
 
+		internal WebSocket WebSocket
+		{
+			get { return this.webSocket; }
+		}
+
 		override public String ToString ()
 		{
-			return String.Format ("[LoggerAPIConnectionWS apiUrl: {1}, apiKey: #{2}]", apiUrl, apiKey);
+			return String.Format ("[LoggerAPIConnectionWS apiUrl: {0}, apiKey: #{1}]", apiUrl, apiKey);
 		}
 
 		/**
@@ -320,7 +340,7 @@ namespace weblog
 		public void sendMetrics(ICollection<Timer> timers){
 			Console.WriteLine ("sending timers over ws: " + timers);
 			foreach(Timer timer in timers){
-				websocket.Send(createMetricMessage(timer.MetricName, timer.TimeElapsedMilliseconds.ToString()));
+				webSocket.Send(createMetricMessage(timer.MetricName, timer.TimeElapsedMilliseconds.ToString()));
 			}
 		}
 
@@ -339,7 +359,7 @@ namespace weblog
 			Console.WriteLine ("WeblogNG: Message " + e.Message);
 		}
 
-		private static void websocket_Closed (object sender, System.EventArgs e)
+		private void websocket_Closed (object sender, System.EventArgs e)
 		{
 			Console.WriteLine ("WeblogNG: Connection closed");
 		}
