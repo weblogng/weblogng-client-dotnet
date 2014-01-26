@@ -23,7 +23,12 @@ namespace weblog
 		{
 			return Watch.IsRunning;
 		}
-		
+
+		public void Stop()
+		{
+			Watch.Stop ();
+		}
+
 		public void Dispose ()
 		{
 			Watch.Stop();

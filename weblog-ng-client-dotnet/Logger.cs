@@ -279,6 +279,7 @@ namespace weblog
 		private String apiKey;
 		private String apiUrl;
 		private WebSocket webSocket;
+		private AutoResetEvent socketOpenedEvent = new AutoResetEvent(false);
 
 		public LoggerAPIConnectionWS(String apiHost, String apiKey){
 			this.apiKey = apiKey;
@@ -287,10 +288,32 @@ namespace weblog
 			//websocket will be created lazily so that complications of websocket management do not occur during construction.
 		}
 
-		internal WebSocket GetOrCreateWebSocket(){
-			if (this.webSocket == null) {
+		/// <summary>
+		/// Get or create an open web socket connection to the api; will block until either an open socket is available or 
+		/// the optionally-specified open timeout is reached.
+		/// </summary>
+		/// <returns>an web socket open to the api</returns>
+		internal WebSocket GetOrCreateOpenWebSocket(int openTimeoutInMs=2500)
+		{
+			if (this.webSocket == null)
+			{
 				this.webSocket = CreateWebSocket (this);
 			}
+
+			if (this.webSocket.State != WebSocketState.Open) 
+			{
+				this.socketOpenedEvent = new AutoResetEvent (false);
+				this.webSocket.Opened += new EventHandler (websocket_Opened);
+
+				this.webSocket.Open ();
+
+				if (!socketOpenedEvent.WaitOne (openTimeoutInMs))
+				{
+					throw new SystemException (string.Format ("could not open socket within {0} ms.", openTimeoutInMs));
+				}
+			}
+
+			Console.WriteLine ("returning WebSocket in state: {0}", this.webSocket.State);
 
 			return this.webSocket;
 		}
@@ -299,12 +322,8 @@ namespace weblog
 			WebSocket websocket = new WebSocket (apiConn.ApiUrl);
 
 			websocket.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs> (apiConn.websocket_Error);
-			websocket.Opened += new EventHandler (apiConn.websocket_Opened);
 			websocket.Closed += new EventHandler (apiConn.websocket_Closed);
 			websocket.MessageReceived += new EventHandler<MessageReceivedEventArgs> (apiConn.websocket_MessageReceived);
-			websocket.Open ();
-
-			Console.WriteLine ("WeblogNG: WebSocket version: " + websocket.Version);
 			return websocket;
 		}
 
@@ -338,20 +357,25 @@ namespace weblog
 		}
 
 		public void sendMetrics(ICollection<Timer> timers){
-			Console.WriteLine ("sending timers over ws: " + timers);
+			Console.WriteLine ("Sending {0} timers over websocket", timers.Count);
+
+			WebSocket webSocket = GetOrCreateOpenWebSocket ();
 			foreach(Timer timer in timers){
 				webSocket.Send(createMetricMessage(timer.MetricName, timer.TimeElapsedMilliseconds.ToString()));
 			}
+
+			Console.WriteLine ("Sent {0} timers over websocket", timers.Count);
 		}
 
 		private void websocket_Opened (object sender, EventArgs e)
 		{
-			Console.WriteLine ("WeblogNG: Connected");
+			Console.WriteLine ("WeblogNG: Opened");
+			socketOpenedEvent.Set();
 		}
 
 		private void websocket_Error (object sender, ErrorEventArgs e)
 		{
-			Console.WriteLine ("WeblogNG: Error ");
+			Console.WriteLine ("WeblogNG: Error: {0}", e.Exception.Message);
 		}
 
 		private void websocket_MessageReceived (object sender, MessageReceivedEventArgs e)
