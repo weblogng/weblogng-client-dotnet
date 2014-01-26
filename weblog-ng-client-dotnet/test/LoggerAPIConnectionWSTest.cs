@@ -11,7 +11,6 @@ using SuperSocket.SocketBase.Config;
 using SuperSocket.SocketBase.Logging;
 using SuperSocket.SocketBase;
 using SuperSocket.SocketEngine;
-using SuperWebSocket.SubProtocol;
 using SuperWebSocket;
 using WebSocket4Net;
 using weblog;
@@ -38,6 +37,8 @@ namespace weblog.test
 		[TestFixtureSetUp]
 		public virtual void Setup()
 		{
+			RegisterUnhandledExceptionHandler ();
+
 			webSocketServer = new WebSocketServer();
 			webSocketServer.NewSessionConnected += new SessionHandler<WebSocketSession>(webSocketServer_NewSessionConnected);
 			webSocketServer.NewMessageReceived += new SessionHandler<WebSocketSession, string>(webSocketServer_NewMessageReceived);
@@ -51,6 +52,26 @@ namespace weblog.test
 					Name = "WeblogNG Integration Testing Server",
 					LogAllSocketException = true,
 				}, logFactory: new ConsoleLogFactory());
+		}
+
+		//fails due to what appears to be an uncaught error in SuperSocket/WebSocket4Net
+		/// <summary>
+		/// Registers an unhandled exception handler that prints the exception.  This is necessary because SuperSocket/WebSocket4Net
+		/// generates unhandled exceptions during the failure-handling tests.
+		/// </summary>
+		/// <example>
+		///System.Net.Sockets.Socket.SetSocketOption (optionLevel=System.Net.Sockets.SocketOptionLevel.Socket, optionName=System.Net.Sockets.SocketOptionName.KeepAlive, optionValue=true) in /private/tmp/source/bockbuild-xamarin/profiles/mono-mac-xamarin/build-root/mono-3.2.5/mcs/class/System/System.Net.Sockets/Socket.cs:2091
+		///SuperSocket.ClientEngine.TcpClientSession.ProcessConnect (socket={System.Net.Sockets.Socket}, state=(null), e={System.Net.Sockets.SocketAsyncEventArgs}) in 
+		///SuperSocket.ClientEngine.ConnectAsyncExtension.SocketConnectCompleted (sender={System.Net.Sockets.Socket}, e={System.Net.Sockets.SocketAsyncEventArgs}) in 
+		///System.Net.Sockets.SocketAsyncEventArgs.OnCompleted (e={System.Net.Sockets.SocketAsyncEventArgs}) in /private/tmp/source/bockbuild-xamarin/profiles/mono-mac-xamarin/build-root/mono-3.2.5/mcs/class/System/System.Net.Sockets/SocketAsyncEventArgs.cs:177
+		///System.Net.Sockets.SocketAsyncEventArgs.ConnectCallback () in /private/tmp/source/bockbuild-xamarin/profiles/mono-mac-xamarin/build-root/mono-3.2.5/mcs/class/System/System.Net.Sockets/SocketAsyncEventArgs.cs:262
+		///System.Net.Sockets.SocketAsyncEventArgs.DispatcherCB (ares={System.Net.Sockets.Socket.SocketAsyncResult}) in /private/tmp/source/bockbuild-xamarin/profiles/mono-mac-xamarin/build-root/mono-3.2.5/mcs/class/System/System.Net.Sockets/SocketAsyncEventArgs.cs:234
+		/// </example>
+
+		private void RegisterUnhandledExceptionHandler()
+		{
+			AppDomain currentDomain = AppDomain.CurrentDomain;
+			currentDomain.UnhandledException += new UnhandledExceptionEventHandler(ExceptionUtilities.UnhandledExceptionHandler);
 		}
 
 		void webSocketServer_NewSessionConnected (WebSocketSession session)
@@ -114,21 +135,6 @@ namespace weblog.test
 			Assert.AreEqual (expectedUrl, apiConn.ApiUrl);
 
 			Assert.IsNull (apiConn.WebSocket);
-		}
-
-		[Test()]
-		public void should_create_a_websocket()
-		{
-			String expectedKey = "key";
-			String expectedHost = string.Format("{0}:{1}", serverHost, serverPort);
-
-			LoggerAPIConnectionWS apiConn = new LoggerAPIConnectionWS (expectedHost, expectedKey);
-
-			Assert.IsNull (apiConn.WebSocket);
-
-			WebSocket client = LoggerAPIConnectionWS.CreateWebSocket (apiConn);
-			Assert.AreEqual (WebSocketState.None, client.State);
-		
 		}
 
 		[Test()]
@@ -234,6 +240,58 @@ namespace weblog.test
 
 		}
 
+		[Test()]
+		public void should_throw_CannotSendMetricsException_when_SendMetrics_fails_after_initial_connect()
+		{
+			LoggerAPIConnectionWS apiConn = MakeAPIConnToTestServer ();
+
+			LinkedList<Timer> timersBeforeFail = MakeTestTimers ("before-failure", 3);
+			apiConn.sendMetrics (timersBeforeFail);
+
+			WaitForMetricsToBeReceived ();
+
+			Assert.AreEqual (timersBeforeFail.Count, this.receivedMessages.Count);
+
+			//Simulate a long-duration connectivity problem
+			StopServer ();
+			Thread.Sleep (100);
+
+			LinkedList<Timer> timersDuringFail = MakeTestTimers ("during-failure", 7);
+
+			try
+			{
+				Console.WriteLine("about to sendMetrics");
+				apiConn.sendMetrics(timersDuringFail);
+
+				Assert.Fail("expected sendMetrics to throw CannotSendMetricsException"); 
+			} catch (CannotSendMetricsException csm_e)
+			{
+				Assert.AreEqual(string.Format("Could not send metrics to {0}", apiConn.ApiUrl), csm_e.Message);
+				Assert.IsInstanceOfType(typeof(OpenConnectionTimeoutException), csm_e.InnerException);
+			}
+
+		}
+
+		[Test()]
+		public void should_throw_CannotSendMetricsException_when_metrics_cannot_be_sent_on_initial_connect()
+		{
+			LoggerAPIConnectionWS apiConn = MakeAPIConnToTestServer ();
+
+			StopServer ();
+
+			LinkedList<Timer> timersDuringFail = MakeTestTimers ("during-failure", 7);
+
+			try
+			{
+				Console.WriteLine("about to sendMetrics");
+				apiConn.sendMetrics(timersDuringFail);
+				Assert.Fail("expected sendMetrics to throw CannotSendMetricsException"); 
+			} catch (CannotSendMetricsException csm_e)
+			{
+				Assert.AreEqual(string.Format("Could not send metrics to {0}", apiConn.ApiUrl), csm_e.Message);
+				Assert.IsInstanceOfType(typeof(OpenConnectionTimeoutException), csm_e.InnerException);
+			}
+		}
 
 	}
 
