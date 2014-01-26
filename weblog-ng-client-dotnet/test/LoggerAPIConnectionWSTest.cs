@@ -178,21 +178,26 @@ namespace weblog.test
 			Thread.Sleep (250);
 		}
 
+		private LinkedList<Timer> MakeTestTimers(String metricName, int numTimers)
+		{
+			Logger logger = MakeLogger ();
+			LinkedList<Timer> timers = new LinkedList<Timer> ();
+			for (int i = 0; i < numTimers; i++)
+			{
+				Timer t = new Timer (metricName, logger);
+				Thread.Sleep (random.Next(0, 25));
+				t.Stop ();
+				timers.AddLast (t);
+			}
+			return timers;
+		}
+
 		[Test()]
 		public void should_send_metrics_to_the_server()
 		{
 			LoggerAPIConnectionWS apiConn = MakeAPIConnToTestServer ();
 
-			Logger logger = MakeLogger ();
-			LinkedList<Timer> timers = new LinkedList<Timer> ();
-
-			for (int i = 0; i < 50; i++) {
-				Timer t = new Timer ("should_send_metrics_to_the_server", logger);
-				Thread.Sleep (random.Next(0, 25));
-				t.Stop ();
-				timers.AddLast (t);
-			}
-
+			LinkedList<Timer> timers = MakeTestTimers ("should_send_metrics_to_the_server", 50);
 			apiConn.sendMetrics (timers);
 
 			WaitForMetricsToBeReceived ();
@@ -200,6 +205,35 @@ namespace weblog.test
 			Assert.AreEqual (timers.Count, this.receivedMessages.Count);
 
 		}
+
+		[Test()]
+		public void should_reconnect_to_server_when_connection_is_broken_for_short_duration()
+		{
+			LoggerAPIConnectionWS apiConn = MakeAPIConnToTestServer ();
+
+			LinkedList<Timer> timersBeforeFail = MakeTestTimers ("before-failure", 3);
+			apiConn.sendMetrics (timersBeforeFail);
+
+			WaitForMetricsToBeReceived ();
+
+			Assert.AreEqual (timersBeforeFail.Count, this.receivedMessages.Count);
+
+			//Simulate a short-duration connectivity problem, e.g.
+			// * network hiccup
+			// * restart of WeblogNG api
+			StopServer ();
+			Thread.Sleep (500);
+			StartServer ();
+
+			LinkedList<Timer> timersAfterFail = MakeTestTimers ("after-failure", 10);
+			apiConn.sendMetrics (timersAfterFail);
+
+			WaitForMetricsToBeReceived ();
+
+			Assert.AreEqual (timersAfterFail.Count, this.receivedMessages.Count);
+
+		}
+
 
 	}
 
