@@ -259,6 +259,23 @@ namespace weblog
 
 	}
 
+	public class ExceptionUtilities
+	{
+		/// <summary>
+		/// Handles unhandled exceptions by printing details of the exception and whether the runtime is terminating (termination status doesn't appear to mean what you'd think it means, btw).
+		/// </summary>
+		/// <param name="sender">Sender.</param>
+		/// <param name="args">Arguments.</param>
+		public static void UnhandledExceptionHandler(object sender, UnhandledExceptionEventArgs args) 
+		{
+			Console.WriteLine("Runtime terminating: {0}", args.IsTerminating);
+			Exception e = (Exception) args.ExceptionObject;
+			Console.WriteLine("UnhandledExceptionHandler caught : " + e.Message);
+			Console.WriteLine (e.ToString ());
+
+		}
+	}
+
 	class MetricUtilities 
 	{
 		private static String INVALID_CHAR_PATTERN = "[^\\w\\d_-]";
@@ -274,23 +291,75 @@ namespace weblog
 		void sendMetrics(ICollection<Timer> timers);
 	}
 
+	internal class CannotSendMetricsException : System.Exception {
+		internal CannotSendMetricsException(string message,
+			Exception innerException): base(message, innerException)
+		{
+		}
+	}
+	
+	internal class InvalidSocketStateException : System.Exception {
+		internal InvalidSocketStateException(string message) :base (message){
+		}
+	}
+
+	internal class OpenConnectionTimeoutException : System.Exception {
+		internal OpenConnectionTimeoutException(string message) :base (message){
+		}
+	}
+
 	internal class LoggerAPIConnectionWS : LoggerAPIConnection {
 
 		private String apiKey;
 		private String apiUrl;
-		private WebSocket websocket;
+		private object webSocketLock = new object ();
+		private WebSocket webSocket;
+		private AutoResetEvent attemptOpenSocketEvent = new AutoResetEvent(false);
 
 		public LoggerAPIConnectionWS(String apiHost, String apiKey){
 			this.apiKey = apiKey;
 			this.apiUrl = "ws://" + apiHost + "/log/ws";
-			websocket = new WebSocket (apiUrl);
 
-			websocket.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs> (websocket_Error);
-			websocket.Opened += new EventHandler (websocket_Opened);
-			websocket.Closed += new EventHandler (websocket_Closed);
-			websocket.MessageReceived += new EventHandler<MessageReceivedEventArgs> (websocket_MessageReceived);
-			websocket.Open ();
-			Console.WriteLine ("WeblogNG: WebSocket version: " + websocket.Version);
+			//websocket will be created lazily so that complications of websocket management do not occur during construction.
+		}
+
+		/// <summary>
+		/// Get or create an open web socket connection to the api; will block until either an open socket is available or 
+		/// the optionally-specified open timeout is reached.
+		/// </summary>
+		/// <returns>an web socket open to the api</returns>
+		internal WebSocket GetOrCreateOpenWebSocket(int openTimeoutInMs=2500)
+		{
+			lock (this.webSocketLock) {
+				if (this.webSocket == null) {
+					this.webSocket = new WebSocket (ApiUrl);
+
+					this.attemptOpenSocketEvent = new AutoResetEvent (false);
+					this.webSocket.Opened += new EventHandler (websocket_Opened);
+					this.webSocket.Error += new EventHandler<SuperSocket.ClientEngine.ErrorEventArgs> (websocket_Error);
+					this.webSocket.Closed += new EventHandler (websocket_Closed);
+					this.webSocket.MessageReceived += new EventHandler<MessageReceivedEventArgs> (websocket_MessageReceived);
+				}
+
+				if (WebSocketState.Open == this.webSocket.State) {
+					Console.WriteLine ("returning WebSocket in state: {0}", this.webSocket.State);
+					return this.webSocket;
+				} else if (WebSocketState.None == this.webSocket.State) {
+
+					this.webSocket.Open ();
+
+					if (!attemptOpenSocketEvent.WaitOne (openTimeoutInMs)) {
+						throw new OpenConnectionTimeoutException (string.Format ("could not open socket within {0} ms.", openTimeoutInMs));
+					}
+
+					Console.WriteLine ("returning WebSocket in state: {0}", this.webSocket.State);
+					return this.webSocket;
+				} else {
+					WebSocketState invalidState = this.webSocket.State;
+					this.webSocket = null;
+					throw new InvalidSocketStateException (String.Format("Connection to {0} was in state {1}, cannot proceed", ApiUrl, invalidState));
+				}
+			}
 		}
 
 		public String ApiKey
@@ -303,9 +372,14 @@ namespace weblog
 			get { return this.apiUrl; }
 		}
 
+		internal WebSocket WebSocket
+		{
+			get { return this.webSocket; }
+		}
+
 		override public String ToString ()
 		{
-			return String.Format ("[LoggerAPIConnectionWS apiUrl: {1}, apiKey: #{2}]", apiUrl, apiKey);
+			return String.Format ("[LoggerAPIConnectionWS apiUrl: {0}, apiKey: #{1}]", apiUrl, apiKey);
 		}
 
 		/**
@@ -318,20 +392,31 @@ namespace weblog
 		}
 
 		public void sendMetrics(ICollection<Timer> timers){
-			Console.WriteLine ("sending timers over ws: " + timers);
-			foreach(Timer timer in timers){
-				websocket.Send(createMetricMessage(timer.MetricName, timer.TimeElapsedMilliseconds.ToString()));
+			Console.WriteLine ("Sending {0} timers over websocket", timers.Count);
+
+			try {
+				WebSocket webSocket = GetOrCreateOpenWebSocket ();
+				foreach(Timer timer in timers){
+					webSocket.Send(createMetricMessage(timer.MetricName, timer.TimeElapsedMilliseconds.ToString()));
+				}
+			} catch (Exception e){
+				throw new CannotSendMetricsException (String.Format ("Could not send metrics to {0}", ApiUrl), e);
 			}
+
+			Console.WriteLine ("Sent {0} timers over websocket", timers.Count);
 		}
 
 		private void websocket_Opened (object sender, EventArgs e)
 		{
-			Console.WriteLine ("WeblogNG: Connected");
+			Console.WriteLine ("WeblogNG: Opened");
+			attemptOpenSocketEvent.Set();
 		}
 
-		private void websocket_Error (object sender, ErrorEventArgs e)
+		private void DiscardWebSocket()
 		{
-			Console.WriteLine ("WeblogNG: Error ");
+			lock (webSocketLock) {
+				this.webSocket = null;
+			}
 		}
 
 		private void websocket_MessageReceived (object sender, MessageReceivedEventArgs e)
@@ -339,9 +424,16 @@ namespace weblog
 			Console.WriteLine ("WeblogNG: Message " + e.Message);
 		}
 
-		private static void websocket_Closed (object sender, System.EventArgs e)
+		internal void websocket_Error (object sender, ErrorEventArgs e)
+		{
+			Console.WriteLine ("WeblogNG: Error: {0}", e.Exception.Message);
+			DiscardWebSocket ();
+		}
+
+		internal void websocket_Closed (object sender, System.EventArgs e)
 		{
 			Console.WriteLine ("WeblogNG: Connection closed");
+			DiscardWebSocket ();
 		}
 
 
