@@ -412,10 +412,8 @@ namespace weblog
 			attemptOpenSocketEvent.Set();
 		}
 
-		private void websocket_Error (object sender, ErrorEventArgs e)
+		private void DiscardWebSocket()
 		{
-			Console.WriteLine ("WeblogNG: Error: {0}", e.Exception.Message);
-
 			lock (webSocketLock) {
 				this.webSocket = null;
 			}
@@ -426,12 +424,16 @@ namespace weblog
 			Console.WriteLine ("WeblogNG: Message " + e.Message);
 		}
 
-		private void websocket_Closed (object sender, System.EventArgs e)
+		internal void websocket_Error (object sender, ErrorEventArgs e)
+		{
+			Console.WriteLine ("WeblogNG: Error: {0}", e.Exception.Message);
+			DiscardWebSocket ();
+		}
+
+		internal void websocket_Closed (object sender, System.EventArgs e)
 		{
 			Console.WriteLine ("WeblogNG: Connection closed");
-			lock (webSocketLock) {
-				this.webSocket = null;
-			}
+			DiscardWebSocket ();
 		}
 
 

@@ -293,7 +293,57 @@ namespace weblog.test
 			}
 		}
 
-	}
 
+		[Test()]
+		public void on_error_api_conn_should_discard_websocket_and_reconnect_for_subsequent_metrics()
+		{
+			LoggerAPIConnectionWS apiConn = MakeAPIConnToTestServer ();
+
+			LinkedList<Timer> timersBeforeError = MakeTestTimers ("before-error", 3);
+			apiConn.sendMetrics (timersBeforeError);
+			WebSocket socketBeforeFailure = apiConn.WebSocket;
+
+			WaitForMetricsToBeReceived ();
+
+			apiConn.websocket_Error (new object (), new SuperSocket.ClientEngine.ErrorEventArgs (new Exception ("an error occurred")));
+
+			Assert.IsNull (apiConn.WebSocket);
+
+			LinkedList<Timer> timersAfterError = MakeTestTimers ("after-error", 10);
+			apiConn.sendMetrics (timersAfterError);
+
+			Assert.AreNotSame (socketBeforeFailure, apiConn.WebSocket);
+
+			WaitForMetricsToBeReceived ();
+
+			Assert.AreEqual (timersBeforeError.Count + timersAfterError.Count, this.receivedMessages.Count);
+
+		}
+
+		[Test()]
+		public void on_close_api_conn_should_discard_websocket_and_reconnect_for_subsequent_metrics()
+		{
+			LoggerAPIConnectionWS apiConn = MakeAPIConnToTestServer ();
+
+			LinkedList<Timer> timersBeforeClose = MakeTestTimers ("before-close", 3);
+			apiConn.sendMetrics (timersBeforeClose);
+			WebSocket socketBeforeFailure = apiConn.WebSocket;
+
+			WaitForMetricsToBeReceived ();
+
+			apiConn.websocket_Closed (new object (), new EventArgs());
+
+			Assert.IsNull (apiConn.WebSocket);
+
+			LinkedList<Timer> timersAfterClose = MakeTestTimers ("after-close", 2);
+			apiConn.sendMetrics (timersAfterClose);
+
+			Assert.AreNotSame (socketBeforeFailure, apiConn.WebSocket);
+
+			WaitForMetricsToBeReceived ();
+
+			Assert.AreEqual (timersBeforeClose.Count + timersAfterClose.Count, this.receivedMessages.Count);
+		}
+	}
 }
 
