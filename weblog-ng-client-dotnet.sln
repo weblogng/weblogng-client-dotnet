@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 11.00
 # Visual Studio 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "weblog-ng-client-dotnet", "weblog-ng-client-dotnet\weblog-ng-client-dotnet.csproj", "{F1BEC712-26E8-4AC9-A5F4-E9BDB0CCE0F5}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "tester", "tester\tester.csproj", "{3CE0564C-F453-40FE-AED3-AA1534726314}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WeblogNG.Test", "WeblogNG.Test\WeblogNG.Test.csproj", "{3CE0564C-F453-40FE-AED3-AA1534726314}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,6 +21,6 @@ Global
 		{F1BEC712-26E8-4AC9-A5F4-E9BDB0CCE0F5}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(MonoDevelopProperties) = preSolution
-		StartupItem = tester\tester.csproj
+		StartupItem = weblog-ng-client-dotnet\weblog-ng-client-dotnet.csproj
 	EndGlobalSection
 EndGlobal
