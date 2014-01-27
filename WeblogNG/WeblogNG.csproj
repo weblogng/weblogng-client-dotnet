@@ -31,7 +31,7 @@
   <ItemGroup>
     <Reference Include="System" />
     <Reference Include="WebSocket4Net">
-      <HintPath>WebSocket4Net.dll</HintPath>
+      <HintPath>Reference\WebSocket4Net.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
