@@ -55,15 +55,17 @@ namespace WeblogNG.Demo
 		}
 	}
 }
+```
 
 The WeblogNG Logger takes a number of steps to impose a minimal impact on the instrumented application:
 
 * when a Timer finishes and is handed back to the Logger, it is queued for flushing to the api in a non-blocking way
 
-* periodically (currently, every 10 seconds), a timing data is flushed to the WeblogNG api servers for aggregation
-	- a separate thread is used for flushing tasks
+* periodically, a timing data is flushed to the WeblogNG api servers for aggregation
+	- the current flush period is 10 seconds
+	- a separate thread is used for flushing tasks, not the application's calling threads
 	- the task factory used to flush timers is limited to a single thread LimitedConcurrencyLevelTaskScheduler in order
-	to bound thread resource usage in the using application.
+	to bound thread resource usage in the using application
 
 * the WeblogNG library takes care-of:
     - all concurrency matters when Timers are created and finished in a `using` statement
@@ -72,6 +74,3 @@ The WeblogNG Logger takes a number of steps to impose a minimal impact on the in
 Note: Currently, if the WeblogNG api is unreachable when a flush task executes, the timing data will be discarded.  This
 behavior may change in the future (or become configurable), but the intent is to prevent any WeblogNG api availability
 issues from causing a memory 'leak' in applications using the library.
-
-
-```
