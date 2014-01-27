@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using weblog;
 
-namespace weblog.test
+namespace weblog
 {
 	class MockFinishedMetricsFlusher : BaseFinishedMetricsFlusher {
 

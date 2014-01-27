@@ -17,7 +17,7 @@ using weblog;
 
 
 
-namespace weblog.test
+namespace weblog
 {
 
 	[TestFixture()]

@@ -40,10 +40,26 @@
       <HintPath>..\weblog-ng-client-dotnet\WebSocket4Net.dll</HintPath>
     </Reference>
     <Reference Include="nunit.framework" />
+    <Reference Include="SuperSocket.Common">
+      <HintPath>Reference\SuperSocket.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="SuperSocket.SocketBase">
+      <HintPath>Reference\SuperSocket.SocketBase.dll</HintPath>
+    </Reference>
+    <Reference Include="SuperSocket.SocketEngine">
+      <HintPath>Reference\SuperSocket.SocketEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="SuperWebSocket">
+      <HintPath>Reference\SuperWebSocket.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AssemblyInfo.cs" />
     <Compile Include="InteractiveTester.cs" />
+    <Compile Include="TimerTest.cs" />
+    <Compile Include="LoggerAPIConnectionWSTest.cs" />
+    <Compile Include="LoggerTest.cs" />
+    <Compile Include="MetricUtilitiesTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
