@@ -9,7 +9,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>WeblogNG.Test</RootNamespace>
     <AssemblyName>weblog-client-tester</AssemblyName>
-    <StartupObject>WeblogNG.Test.InteractiveTester</StartupObject>
+    <StartupObject>WeblogNG.Demo.Application</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -60,6 +60,7 @@
     <Compile Include="LoggerAPIConnectionWSTest.cs" />
     <Compile Include="LoggerTest.cs" />
     <Compile Include="MetricUtilitiesTest.cs" />
+    <Compile Include="Demo.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
