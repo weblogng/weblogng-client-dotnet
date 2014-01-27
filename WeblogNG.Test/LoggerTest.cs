@@ -1,9 +1,8 @@
 using System;
 using System.Collections.Generic;
 using NUnit.Framework;
-using weblog;
 
-namespace weblog.test
+namespace WeblogNG.Test
 {
 	class MockFinishedMetricsFlusher : BaseFinishedMetricsFlusher {
 

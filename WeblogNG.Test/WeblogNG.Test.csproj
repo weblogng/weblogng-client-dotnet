@@ -7,9 +7,9 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{3CE0564C-F453-40FE-AED3-AA1534726314}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>weblogclienttester</RootNamespace>
+    <RootNamespace>WeblogNG.Test</RootNamespace>
     <AssemblyName>weblog-client-tester</AssemblyName>
-    <StartupObject>weblogclienttester.MainClass</StartupObject>
+    <StartupObject>WeblogNG.Test.InteractiveTester</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -36,14 +36,30 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
-    <Reference Include="WebSocket4Net">
-      <HintPath>..\weblog-ng-client-dotnet\WebSocket4Net.dll</HintPath>
-    </Reference>
     <Reference Include="nunit.framework" />
+    <Reference Include="SuperSocket.Common">
+      <HintPath>Reference\SuperSocket.Common.dll</HintPath>
+    </Reference>
+    <Reference Include="SuperSocket.SocketBase">
+      <HintPath>Reference\SuperSocket.SocketBase.dll</HintPath>
+    </Reference>
+    <Reference Include="SuperSocket.SocketEngine">
+      <HintPath>Reference\SuperSocket.SocketEngine.dll</HintPath>
+    </Reference>
+    <Reference Include="SuperWebSocket">
+      <HintPath>Reference\SuperWebSocket.dll</HintPath>
+    </Reference>
+    <Reference Include="WebSocket4Net">
+      <HintPath>..\WeblogNG\Reference\WebSocket4Net.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Main.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="InteractiveTester.cs" />
+    <Compile Include="TimerTest.cs" />
+    <Compile Include="LoggerAPIConnectionWSTest.cs" />
+    <Compile Include="LoggerTest.cs" />
+    <Compile Include="MetricUtilitiesTest.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>
@@ -62,9 +78,9 @@
     </MonoDevelop>
   </ProjectExtensions>
   <ItemGroup>
-    <ProjectReference Include="..\weblog-ng-client-dotnet\weblog-ng-client-dotnet.csproj">
+    <ProjectReference Include="..\WeblogNG\WeblogNG.csproj">
       <Project>{F1BEC712-26E8-4AC9-A5F4-E9BDB0CCE0F5}</Project>
-      <Name>weblog-ng-client-dotnet</Name>
+      <Name>WeblogNG</Name>
     </ProjectReference>
   </ItemGroup>
 </Project>

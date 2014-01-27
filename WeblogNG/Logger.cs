@@ -4,14 +4,13 @@ using System.Net;
 using WebSocket4Net;
 using SuperSocket.ClientEngine;
 using System.Text.RegularExpressions;
-using weblog;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Schedulers;
 
-namespace weblog
+namespace WeblogNG
 {
 
 	public class Logger
@@ -20,7 +19,7 @@ namespace weblog
 		private FinishedMetricsFlusher finishedMetricsFlusher;
 		private IDictionary<String, Timer> inProgressTimers = new Dictionary<String, Timer> ();
 
-		internal Logger (FinishedMetricsFlusher flusher)
+		public Logger (FinishedMetricsFlusher flusher)
 		{
 			Console.WriteLine ("WeblogNG: initializing...");
 			this.id = System.Guid.NewGuid ().ToString ();
@@ -33,7 +32,7 @@ namespace weblog
 
 		}
 
-		internal FinishedMetricsFlusher FinishedMetricsFlusher 
+		public FinishedMetricsFlusher FinishedMetricsFlusher 
 		{
 			get { return this.finishedMetricsFlusher; }
 		}
@@ -66,7 +65,7 @@ namespace weblog
 			this.finishedMetricsFlusher.AddToFinishedTimers (timer);
 		}
 
-		internal LinkedList<Timer> GetFinishedTimers()
+		public LinkedList<Timer> GetFinishedTimers()
 		{
 			return this.finishedMetricsFlusher.GetFinishedTimers ();
 		}
@@ -95,7 +94,7 @@ namespace weblog
 			return timer;
 		}
 
-		internal bool HasTimer(String metricName)
+		public bool HasTimer(String metricName)
 		{
 			return this.inProgressTimers.ContainsKey (metricName);
 		}
@@ -174,7 +173,7 @@ namespace weblog
 		}
 	}
 	
-	internal interface FinishedMetricsFlusher {
+	public interface FinishedMetricsFlusher {
 		void Flush (Object stateInfo);
 
 		void AddToFinishedTimers (Timer timer);
@@ -182,7 +181,7 @@ namespace weblog
 		LinkedList<Timer> GetFinishedTimers ();
 	}
 
-	abstract class BaseFinishedMetricsFlusher : FinishedMetricsFlusher {
+	public abstract class BaseFinishedMetricsFlusher : FinishedMetricsFlusher {
 
 		private Object finishedTimersLock = new Object();
 		private LinkedList<Timer> FinishedTimers = new LinkedList<Timer>();
@@ -203,7 +202,7 @@ namespace weblog
 			}
 		}
 
-		internal LinkedList<Timer> DrainFinishedTimersForFlush()
+		public LinkedList<Timer> DrainFinishedTimersForFlush()
 		{
 			LinkedList<Timer> oldFinishedTimers;
 			lock (finishedTimersLock) {
@@ -215,7 +214,7 @@ namespace weblog
 	}
 
 
-	class AsyncFinishedMetricsFlusher : BaseFinishedMetricsFlusher
+	public class AsyncFinishedMetricsFlusher : BaseFinishedMetricsFlusher
 	{
 		//there are a number of options (understatement) for implementing async operations in C#:
 		//best bet currently looks like using a 'Thread Timer:
@@ -227,7 +226,7 @@ namespace weblog
 		private LoggerAPIConnection apiConnection;
 		private TaskFactory taskFactory;
 
-		internal AsyncFinishedMetricsFlusher(LoggerAPIConnection apiConnection)
+		public AsyncFinishedMetricsFlusher(LoggerAPIConnection apiConnection)
 		{
 			this.apiConnection = apiConnection;
 
@@ -238,7 +237,7 @@ namespace weblog
 			new System.Threading.Timer (callback, new object(), 10000, 10000);
 		}
 
-		internal LoggerAPIConnection LoggerAPIConnection 
+		public LoggerAPIConnection LoggerAPIConnection 
 		{
 			get { return this.apiConnection; }
 		}
@@ -276,39 +275,39 @@ namespace weblog
 		}
 	}
 
-	class MetricUtilities 
+	public class MetricUtilities 
 	{
 		private static String INVALID_CHAR_PATTERN = "[^\\w\\d_-]";
 
-		internal static String sanitizeMetricName (String metricName)
+		public static String sanitizeMetricName (String metricName)
 		{
 			return Regex.Replace(metricName, INVALID_CHAR_PATTERN, "_"); 
 		}
 
 	}
 	
-	internal interface LoggerAPIConnection {
+	public interface LoggerAPIConnection {
 		void sendMetrics(ICollection<Timer> timers);
 	}
 
-	internal class CannotSendMetricsException : System.Exception {
+	public class CannotSendMetricsException : System.Exception {
 		internal CannotSendMetricsException(string message,
 			Exception innerException): base(message, innerException)
 		{
 		}
 	}
 	
-	internal class InvalidSocketStateException : System.Exception {
+	public class InvalidSocketStateException : System.Exception {
 		internal InvalidSocketStateException(string message) :base (message){
 		}
 	}
 
-	internal class OpenConnectionTimeoutException : System.Exception {
+	public class OpenConnectionTimeoutException : System.Exception {
 		internal OpenConnectionTimeoutException(string message) :base (message){
 		}
 	}
 
-	internal class LoggerAPIConnectionWS : LoggerAPIConnection {
+	public class LoggerAPIConnectionWS : LoggerAPIConnection {
 
 		private String apiKey;
 		private String apiUrl;
@@ -328,7 +327,7 @@ namespace weblog
 		/// the optionally-specified open timeout is reached.
 		/// </summary>
 		/// <returns>an web socket open to the api</returns>
-		internal WebSocket GetOrCreateOpenWebSocket(int openTimeoutInMs=2500)
+		public WebSocket GetOrCreateOpenWebSocket(int openTimeoutInMs=2500)
 		{
 			lock (this.webSocketLock) {
 				if (this.webSocket == null) {
@@ -372,7 +371,7 @@ namespace weblog
 			get { return this.apiUrl; }
 		}
 
-		internal WebSocket WebSocket
+		public WebSocket WebSocket
 		{
 			get { return this.webSocket; }
 		}
@@ -424,13 +423,13 @@ namespace weblog
 			Console.WriteLine ("WeblogNG: Message " + e.Message);
 		}
 
-		internal void websocket_Error (object sender, ErrorEventArgs e)
+		public void websocket_Error (object sender, ErrorEventArgs e)
 		{
 			Console.WriteLine ("WeblogNG: Error: {0}", e.Exception.Message);
 			DiscardWebSocket ();
 		}
 
-		internal void websocket_Closed (object sender, System.EventArgs e)
+		public void websocket_Closed (object sender, System.EventArgs e)
 		{
 			Console.WriteLine ("WeblogNG: Connection closed");
 			DiscardWebSocket ();
