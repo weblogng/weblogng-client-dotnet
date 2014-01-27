@@ -7,9 +7,9 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{3CE0564C-F453-40FE-AED3-AA1534726314}</ProjectGuid>
     <OutputType>Exe</OutputType>
-    <RootNamespace>weblogclienttester</RootNamespace>
+    <RootNamespace>WeblogNG.Test</RootNamespace>
     <AssemblyName>weblog-client-tester</AssemblyName>
-    <StartupObject>weblogclienttester.MainClass</StartupObject>
+    <StartupObject>WeblogNG.Test.InteractiveTester</StartupObject>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -42,8 +42,8 @@
     <Reference Include="nunit.framework" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Main.cs" />
     <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="InteractiveTester.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <ProjectExtensions>

@@ -2,9 +2,9 @@ using System;
 using System.Security.Permissions;
 using weblog;
 
-namespace weblogclienttester
+namespace WeblogNG.Test
 {
-	class MainClass
+	class InteractiveTester
 	{
 		private static Random random = new Random();
 
