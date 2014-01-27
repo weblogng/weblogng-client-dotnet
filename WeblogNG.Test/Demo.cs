@@ -4,6 +4,8 @@ namespace WeblogNG.Demo
 {
 	public class Utilities
 	{
+		//be sure to generate and use your own api key via the 'User Account' page at:
+		//http://weblog-ng-ui.herokuapp.com/app/#/account
 		public static Logger Logger = Logger.CreateAsyncLogger ("93c5a127-e2a4-42cc-9cc6-cf17fdac8a7f");
 	}
 
