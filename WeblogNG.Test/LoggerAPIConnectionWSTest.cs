@@ -13,11 +13,9 @@ using SuperSocket.SocketBase;
 using SuperSocket.SocketEngine;
 using SuperWebSocket;
 using WebSocket4Net;
-using weblog;
 
 
-
-namespace weblog
+namespace WeblogNG.Test
 {
 
 	[TestFixture()]

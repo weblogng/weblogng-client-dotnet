@@ -4,14 +4,13 @@ using System.Net;
 using WebSocket4Net;
 using SuperSocket.ClientEngine;
 using System.Text.RegularExpressions;
-using weblog;
 using System.Collections;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Threading.Tasks.Schedulers;
 
-namespace weblog
+namespace WeblogNG
 {
 
 	public class Logger

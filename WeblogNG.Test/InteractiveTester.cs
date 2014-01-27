@@ -1,6 +1,5 @@
 using System;
 using System.Security.Permissions;
-using weblog;
 
 namespace WeblogNG.Test
 {
