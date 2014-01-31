@@ -27,17 +27,25 @@ using System;
 
 namespace WeblogNG.Demo
 {
-	public class Utilities
-	{
-		//be sure to generate and use your own api key via the 'User Account' page at http://weblog-ng-ui.herokuapp.com/app/#/account
-		public static Logger Logger = Logger.CreateAsyncLogger ("93c5a127-e2a4-42cc-9cc6-cf17fdac8a7f");
-	}
 
 	public class Application
 	{
+		public static void Main (string[] args)
+		{
+			//generate and use your own api key via the 'User Account' page at:
+			//http://weblog-ng-ui.herokuapp.com/app/#/account
+			Logger.CreateSharedLogger ("93c5a127-e2a4-42cc-9cc6-cf17fdac8a7f");
+
+			Application app = new Application ();
+			app.StartUp ();
+
+			System.Threading.Thread.Sleep (15000);
+		}
+
 		public void StartUp()
 		{
-			using (Utilities.Logger.CreateTimer ("Application-StartUp")) {
+			using (Logger.SharedLogger.CreateTimer ("Application-StartUp"))
+			{
 				//perform the acutal start up operations, e.g.:
 				//1. read configuration
 				//2. initialize connection pools
@@ -47,15 +55,9 @@ namespace WeblogNG.Demo
 				System.Threading.Thread.Sleep (1000);
 			}
 		}
-
-		public static void Main (string[] args){
-			Application app = new Application ();
-			app.StartUp ();
-
-			System.Threading.Thread.Sleep (15000);
-		}
 	}
 }
+
 ```
 
 The WeblogNG Logger takes a number of steps to impose a minimal impact on the instrumented application:
