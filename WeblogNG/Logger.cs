@@ -182,7 +182,11 @@ namespace WeblogNG
 			}
 		}
 
-
+		/// <summary>
+		/// Gets or sets the shared logger; most users will want to use the CreateSharedLogger function instead of
+		/// setting the SharedLogger property directly.
+		/// </summary>
+		/// <value>The shared logger.</value>
 		public static Logger SharedLogger
 		{
 			get 
