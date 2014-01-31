@@ -13,10 +13,11 @@ namespace WeblogNG.Test
 			AppDomain currentDomain = AppDomain.CurrentDomain;
 			currentDomain.UnhandledException += new UnhandledExceptionEventHandler(ExceptionUtilities.UnhandledExceptionHandler);
 
-			Logger logger = Logger.CreateAsyncLogger ("93c5a127-e2a4-42cc-9cc6-cf17fdac8a7f");
+			Logger logger = Logger.CreateSharedLogger ("93c5a127-e2a4-42cc-9cc6-cf17fdac8a7f");
 
-			using(logger.CreateTimer("csharp-tester-startup")){
-				System.Threading.Thread.Sleep (200); //ms
+			using(logger.CreateTimer("csharp-tester-startup"))
+			{
+				System.Threading.Thread.Sleep (200);
 			}
 
 			Console.WriteLine ("Using logger {0}", logger.ToString ());
@@ -26,9 +27,13 @@ namespace WeblogNG.Test
 			do
 			{
 				command = promptForCommand ().Trim ().ToLower ();
-				if("auto".Equals(command)){
-					while(true){
-						using(logger.CreateTimer("csharp-tester-auto")){
+				if("auto".Equals(command))
+				{
+					while(true)
+					{
+						//the logger created above can also be accessed through the SharedLogger property
+						using(Logger.SharedLogger.CreateTimer("csharp-tester-auto"))
+						{
 							System.Threading.Thread.Sleep (1000 + random.Next(-250, 250));
 						}
 						Console.WriteLine("completed csharp-tester-auto loop {0}", DateTime.Now);
@@ -38,7 +43,8 @@ namespace WeblogNG.Test
 
 		}
 
-		public static String promptForCommand(){
+		public static String promptForCommand()
+		{
 			Console.WriteLine ("Type one of the following options and press enter:");
 			Console.WriteLine ("  auto");
 			Console.WriteLine ("  exit");
