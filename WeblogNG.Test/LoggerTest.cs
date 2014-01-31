@@ -201,7 +201,7 @@ namespace WeblogNG.Test
 			Logger expectedLogger = new Logger (new MockFinishedMetricsFlusher ());
 			Logger.SharedLogger = expectedLogger;
 
-			for (int i = 0; i < 10; i++)
+			for (int i = 0; i < 100; i++)
 			{
 				Assert.AreSame (expectedLogger, Logger.SharedLogger);
 			}
@@ -239,7 +239,7 @@ namespace WeblogNG.Test
 		{
 			Logger expectedLogger = Logger.CreateSharedLogger ("api-key");
 
-			for (int i = 0; i < 10; i++)
+			for (int i = 0; i < 100; i++)
 			{
 				Assert.AreSame(expectedLogger, Logger.CreateSharedLogger("api-key"));
 			}

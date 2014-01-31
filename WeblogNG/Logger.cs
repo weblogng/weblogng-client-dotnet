@@ -13,10 +13,11 @@ using System.Threading.Tasks.Schedulers;
 namespace WeblogNG
 {
 
-	public class Logger
+	public sealed class Logger
 	{
-		private static object sharedLoggerLock = new object ();
-		private static volatile Logger sharedLogger;
+		private const Int32 TIMEOUT_ACQUIRE_LOCK_IN_MS = 500;
+		private static readonly ReaderWriterLockSlim sharedLoggerLock = new ReaderWriterLockSlim ();
+		private static Logger sharedLogger;
 
 		private String id;
 		private FinishedMetricsFlusher finishedMetricsFlusher;
@@ -175,18 +176,47 @@ namespace WeblogNG
 			return new Logger(flusher);
 		}
 
+		internal class CannotLockSharedLoggerException : System.Exception {
+			internal CannotLockSharedLoggerException(string message): base(message)
+			{
+			}
+		}
+
+
 		public static Logger SharedLogger
 		{
 			get 
-			{   //lock(sharedLoggerLock)?
-				return sharedLogger;
+			{   
+				if(sharedLoggerLock.TryEnterReadLock (TIMEOUT_ACQUIRE_LOCK_IN_MS))
+				{
+					try 
+					{
+						return sharedLogger;
+					} 
+					finally 
+					{
+						sharedLoggerLock.ExitReadLock();
+					}
+				} else {
+					throw new CannotLockSharedLoggerException("could not acquire SharedLogger's read lock");
+				}
 			}
 
-			set
-			{
-				lock(sharedLoggerLock)
+			set {
+				if(sharedLoggerLock.TryEnterWriteLock (TIMEOUT_ACQUIRE_LOCK_IN_MS))
 				{
-					sharedLogger = value;
+					try 
+					{ 
+						sharedLogger = value;
+					}
+					finally 
+					{
+						sharedLoggerLock.ExitWriteLock();
+					}
+
+				} else 
+				{
+					throw new CannotLockSharedLoggerException("could not acquire SharedLogger's write lock");
 				}
 			}
 		}
@@ -198,19 +228,38 @@ namespace WeblogNG
 		/// <param name="apiKey">WeblogNG API key.</param>
 		public static Logger CreateSharedLogger(String apiKey)
 		{
-			if (sharedLogger == null) 
+			if (sharedLoggerLock.TryEnterUpgradeableReadLock (TIMEOUT_ACQUIRE_LOCK_IN_MS)) 
 			{
-				lock (sharedLoggerLock)
+				try 
 				{
 					if (sharedLogger == null) 
 					{
-						sharedLogger = CreateAsyncLogger (apiKey);
+						sharedLoggerLock.EnterWriteLock ();
+						try 
+						{
+							sharedLogger = CreateAsyncLogger (apiKey);
+						} finally 
+						{
+							sharedLoggerLock.ExitWriteLock ();
+						}
 					}
+				} 
+				finally 
+				{
+					sharedLoggerLock.ExitUpgradeableReadLock ();
 				}
+
+				return sharedLogger;
+			} 
+			else
+			{
+				throw new CannotLockSharedLoggerException("could not acquire SharedLogger's upgradeable read lock");
 			}
-			return sharedLogger;
 		}
 
+		/// <summary>
+		/// Resets the SharedLogger property to null.
+		/// </summary>
 		public static void ResetSharedLogger()
 		{
 			Logger.SharedLogger = null;
