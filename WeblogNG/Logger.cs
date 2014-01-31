@@ -15,6 +15,9 @@ namespace WeblogNG
 
 	public class Logger
 	{
+		private static object sharedLoggerLock = new object ();
+		private static volatile Logger sharedLogger;
+
 		private String id;
 		private FinishedMetricsFlusher finishedMetricsFlusher;
 		private IDictionary<String, Timer> inProgressTimers = new Dictionary<String, Timer> ();
@@ -170,6 +173,47 @@ namespace WeblogNG
 			LoggerAPIConnectionWS apiConnection = new LoggerAPIConnectionWS ("ec2-174-129-123-237.compute-1.amazonaws.com:9000", apiKey);
 			AsyncFinishedMetricsFlusher flusher = new AsyncFinishedMetricsFlusher (apiConnection);
 			return new Logger(flusher);
+		}
+
+		public static Logger SharedLogger
+		{
+			get 
+			{   //lock(sharedLoggerLock)?
+				return sharedLogger;
+			}
+
+			set
+			{
+				lock(sharedLoggerLock)
+				{
+					sharedLogger = value;
+				}
+			}
+		}
+
+		/// <summary>
+		/// Creates a Logger and stores it in the SharedLogger property if SharedLogger is null.
+		/// </summary>
+		/// <returns>The shared logger.</returns>
+		/// <param name="apiKey">WeblogNG API key.</param>
+		public static Logger CreateSharedLogger(String apiKey)
+		{
+			if (sharedLogger == null) 
+			{
+				lock (sharedLoggerLock)
+				{
+					if (sharedLogger == null) 
+					{
+						sharedLogger = CreateAsyncLogger (apiKey);
+					}
+				}
+			}
+			return sharedLogger;
+		}
+
+		public static void ResetSharedLogger()
+		{
+			Logger.SharedLogger = null;
 		}
 	}
 	
