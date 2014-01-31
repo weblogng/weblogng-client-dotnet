@@ -172,6 +172,82 @@ namespace WeblogNG.Test
 	}
 
 	[TestFixture()]
+	public class SharedLoggerTest 
+	{
+
+		[SetUp]
+		public void SetUp()
+		{
+			Logger.ResetSharedLogger ();
+			Assert.IsNull (Logger.SharedLogger);
+		}
+
+		[TearDown]
+		public void TearDown()
+		{
+			Logger.ResetSharedLogger ();
+			Assert.IsNull (Logger.SharedLogger);
+		}
+
+		[Test()]
+		public void shared_logger_should_be_null_initially()
+		{
+			Assert.IsNull (Logger.SharedLogger);
+		}
+
+		[Test()]
+		public void shared_logger_should_store_provided_value()
+		{
+			Logger expectedLogger = new Logger (new MockFinishedMetricsFlusher ());
+			Logger.SharedLogger = expectedLogger;
+
+			for (int i = 0; i < 100; i++)
+			{
+				Assert.AreSame (expectedLogger, Logger.SharedLogger);
+			}
+
+			Logger.SharedLogger = null;
+
+			Assert.IsNull (Logger.SharedLogger);
+		}
+
+		[Test()]
+		public void ResetSharedLogger_should_set_SharedLogger_property_to_null()
+		{
+			Logger expectedLogger = new Logger (new MockFinishedMetricsFlusher ());
+			Logger.SharedLogger = expectedLogger;
+
+			Assert.IsNotNull (Logger.SharedLogger);
+
+			Logger.ResetSharedLogger ();
+
+			Assert.IsNull (Logger.SharedLogger);
+		}
+
+		[Test()]
+		public void CreateSharedLogger_should_store_instance_of_shared_logger()
+		{
+			Logger sharedLogger = Logger.CreateSharedLogger ("api-key");
+
+			Assert.IsNotNull (sharedLogger);
+			Assert.IsNotNull (Logger.SharedLogger);
+			Assert.AreSame (sharedLogger, Logger.SharedLogger);
+		}
+
+		[Test()]
+		public void repeated_calls_to_CreateSharedLogger_should_return_initial_logger()
+		{
+			Logger expectedLogger = Logger.CreateSharedLogger ("api-key");
+
+			for (int i = 0; i < 100; i++)
+			{
+				Assert.AreSame(expectedLogger, Logger.CreateSharedLogger("api-key"));
+			}
+		}
+
+	}
+
+	[TestFixture()]
 	public class AsyncFinishedMetricsFlusherTest {
 
 		class MockLoggerAPIConnection : LoggerAPIConnection {
